@@ -1,4 +1,12 @@
+#include <Core/Destination.hpp>
 #include <Core/Engine.hpp>
+#include <Core/Health.hpp>
+#include <Core/HealthSystem.hpp>
+#include <Core/PositionSystem.hpp>
+#include <Core/RngSystem.hpp>
+#include <Core/Strength.hpp>
+#include <Features/Hunter.hpp>
+#include <Features/Swordsman.hpp>
 #include <IO/Commands/CreateMap.hpp>
 #include <IO/Commands/March.hpp>
 #include <IO/Commands/SpawnHunter.hpp>
@@ -29,20 +37,37 @@ int main(int argc, char** argv) {
     }
 
     core::Engine engine;
+
+    engine.systems.registerSystem<core::IPositionSystem>(core::MakeCorePositionSystem(engine));
+    engine.systems.registerSystem<core::IHealthSystem>(core::MakeCoreHealthSystem(engine));
+    engine.systems.registerSystem<core::IRngSystem>(core::MakeCoreRngSystem());
+
+    engine.components.registerComponent<core::Position>();
+    engine.components.registerComponent<core::Health>();
+    engine.components.registerComponent<core::Strength>();
+    engine.components.registerComponent<core::Destination>();
+
+    engine.registerUnitType(feature::MakeSwordsmanType(engine));
+
     io::CommandParser parser;
-    parser.add<io::CreateMap>([](auto command) { engine.executeCommand(command); })
-        .add<io::SpawnSwordsman>([](auto command) { engine.executeCommand(command); })
-        .add<io::SpawnHunter>([](auto command) { engine.executeCommand(command); })
-        .add<io::March>([](auto command) { engine.executeCommand(command); });
-
-    engine.RegisterSystem<core::IPositionSystem>(/*...*/);
-    engine.RegisterSystem<core::IHealthSystem>(/*...*/);
-    engine.RegisterSystem<core::ICombatSystem>(/*...*/);
-    engine.RegisterSystem<core::IDestroySystem>(/*...*/);
-
-    engine.RegisterComponent<core::PositionComponent>(/*...*/);
-    engine.RegisterComponent<core::HealthComponent>(/*...*/);
-    engine.RegisterComponent<core::AliveComponent>(/*...*/);
+    parser
+        .add<io::CreateMap>(
+            [&](io::CreateMap c) { engine.systems.getSystem<core::IPositionSystem>().setBounds(c.width, c.height); })
+        .add<io::SpawnSwordsman>([&](io::SpawnSwordsman c) {
+            feature::spawnSwordsman(
+                engine,
+                core::UnitId{c.unitId},
+                core::Position{c.x, c.y},
+                // TODO: change Core HP to uint32_t
+                static_cast<int>(c.hp),
+                c.strength);
+        })
+        .add<io::SpawnHunter>([&](io::SpawnHunter) { feature::spawnHunter(engine); })
+        .add<io::March>([&](io::March c) {
+            engine.components.getComponent<core::Destination>().add(
+                core::UnitId{c.unitId}, core::Destination{core::Position{c.targetX, c.targetY}, true});
+        });
+    parser.parse(file);
 
     engine.run();
 

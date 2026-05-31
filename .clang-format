@@ -135,7 +135,7 @@ IncludeCategories:
 
 # Other
 NamespaceIndentation: None
-FixNamespaceComments: false
+FixNamespaceComments: true
 ForEachMacros:
   - foreach
   - BOOST_FOREACH
