@@ -3,7 +3,6 @@
 #include <Core/CollisionReaction.hpp>
 #include <Core/Engine.hpp>
 #include <algorithm>
-#include <typeindex>
 
 namespace sw::core {
 
@@ -51,7 +50,7 @@ struct CorePositionSystem : IPositionSystem {
             if (other_id == unit_to_move_id || other_position != target_position) {
                 return;
             }
-            if (restrictsMove(other_id)) {
+            if (!isMoveAllowed(other_id)) {
                 blocked = true;
             }
         });
@@ -63,8 +62,7 @@ struct CorePositionSystem : IPositionSystem {
         return true;
     }
 
-    std::vector<UnitId> unitsInRange(Position center, uint32_t min_range, uint32_t max_range,
-                                     UnitId exclude) override {
+    std::vector<UnitId> unitsInRange(Position center, uint32_t min_range, uint32_t max_range, UnitId exclude) override {
         std::vector<UnitId> result;
         positions().forEach([&](UnitId id, Position& position) {
             if (id == exclude) {
@@ -78,28 +76,27 @@ struct CorePositionSystem : IPositionSystem {
         return result;
     }
 
-    // Does the unit occupying a cell forbid others from entering it?
-    bool restrictsMove(UnitId occupant_id) {
+    // May others enter a cell occupied by this unit?
+    bool isMoveAllowed(UnitId occupant_id) {
         const auto type_it = engine.unit_to_type.find(occupant_id);
         if (type_it == engine.unit_to_type.end()) {
-            return false;
+            return true;
         }
-        const auto& reactions = type_it->second.get().reactions;
-        const auto reaction_it = reactions.find(std::type_index(typeid(ICollisionReaction)));
-        if (reaction_it == reactions.end()) {
-            return false;
+        const auto& [_, type_ref] = *type_it;
+        auto reaction = type_ref.get().findReaction<ICollisionReaction>();
+        if (!reaction) {
+            return true;
         }
-        auto& reaction = static_cast<ICollisionReaction&>(*reaction_it->second);
-        return reaction.OnCollide() == CollideReaction::RestrictMove;
+        return reaction->get().OnCollide() != CollideReaction::RestrictMove;
     }
 
     ~CorePositionSystem() override = default;
 };
 
-}
+}  // namespace
 
 IPositionSystemPtr MakeCorePositionSystem(Engine& engine) {
     return std::make_unique<CorePositionSystem>(engine);
 }
 
-}
+}  // namespace sw::core

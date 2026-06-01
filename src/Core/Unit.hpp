@@ -1,7 +1,9 @@
 #pragma once
 
 #include <Core/StrongType.hpp>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -29,6 +31,15 @@ struct UnitType {
     UnitTypeId id = {.value = 0};
     std::vector<IActionPtr> actions;
     std::unordered_map<std::type_index, IReactionPtr> reactions;
+
+    template <typename T>
+    std::optional<std::reference_wrapper<T>> findReaction() const {
+        const auto it = reactions.find(std::type_index(typeid(T)));
+        if (it == reactions.end()) {
+            return std::nullopt;
+        }
+        return std::ref(static_cast<T&>(*it->second));
+    }
 };
 
 using UnitTypeRef = std::reference_wrapper<const UnitType>;

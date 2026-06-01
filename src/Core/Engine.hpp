@@ -1,7 +1,6 @@
 #pragma once
 
 #include <Core/Components.hpp>
-#include <Core/HealthSystem.hpp>
 #include <Core/Systems.hpp>
 #include <Core/Unit.hpp>
 #include <algorithm>
@@ -20,6 +19,13 @@ struct Engine {
     UnitTypes unit_types;
     std::vector<UnitId> creation_order;
 
+    // Units reported dead by systems this tick; Engine performs structural removal at end of tick.
+    std::vector<UnitId> pending_deaths;
+
+    void scheduleDeath(UnitId id) {
+        pending_deaths.push_back(id);
+    }
+
     void registerUnitType(UnitType&& unit_type) {
         unit_types.emplace(unit_type.id, std::move(unit_type));
     }
@@ -32,8 +38,6 @@ struct Engine {
     }
 
     void run() {
-        auto& health = systems.getSystem<IHealthSystem>();
-
         while (creation_order.size() > 1) {
             bool has_action = false;
 
@@ -50,12 +54,13 @@ struct Engine {
                 }
             }
 
-            for (const UnitId dead_id : health.collectDead()) {
+            for (const UnitId dead_id : pending_deaths) {
                 unit_to_type.erase(dead_id);
                 creation_order.erase(
                     std::remove(creation_order.begin(), creation_order.end(), dead_id), creation_order.end());
                 components.removeUnitEverywhere(dead_id);
             }
+            pending_deaths.clear();
 
             if (!has_action) {
                 break;

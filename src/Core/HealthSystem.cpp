@@ -26,21 +26,14 @@ struct CoreHealthSystem : IHealthSystem {
     }
 
     void applyDamage(UnitId id, int amount) override {
-        health().get(id).hp -= amount;
+        auto& hp = health().get(id).hp;
+        if ((hp -= amount) <= 0) {
+            engine.scheduleDeath(id);
+        }
     }
 
     bool isAlive(UnitId id) override {
         return health().has(id) && health().get(id).hp > 0;
-    }
-
-    std::vector<UnitId> collectDead() override {
-        std::vector<UnitId> dead;
-        health().forEach([&](UnitId id, Health& value) {
-            if (value.hp <= 0) {
-                dead.push_back(id);
-            }
-        });
-        return dead;
     }
 
     ~CoreHealthSystem() override = default;
