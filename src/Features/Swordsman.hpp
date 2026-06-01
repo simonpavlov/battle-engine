@@ -8,6 +8,7 @@
 #include <Core/RngSystem.hpp>
 #include <Core/Strength.hpp>
 #include <Core/Unit.hpp>
+#include <Features/MoveAction.hpp>
 #include <cassert>
 #include <memory>
 #include <typeindex>
@@ -18,12 +19,6 @@ namespace sw::feature {
 // TODO: change UnitTypeId underlying type to string; probalbly better static string with string_view to optimize
 // performance
 static const auto kSwordsmanTypeId = core::UnitTypeId{.value = 11};
-
-struct RestrictMoveReaction : core::ICollisionReaction {
-    core::CollideReaction OnCollide() override {
-        return core::CollideReaction::RestrictMove;
-    }
-};
 
 struct AttackAction : core::IAction {
     explicit AttackAction(core::Engine& engine) :
@@ -55,18 +50,6 @@ struct AttackAction : core::IAction {
     }
 };
 
-// TODO: move to MoveAction.hpp
-struct MoveAction : core::IAction {
-    explicit MoveAction(core::Engine& engine) :
-            engine(engine) {}
-
-    core::Engine& engine;
-
-    bool tryExecute(core::UnitId self_id) override {
-        return engine.systems.getSystem<core::IPositionSystem>().advanceMarch(self_id);
-    }
-};
-
 inline core::UnitType MakeSwordsmanType(core::Engine& engine) {
     auto type = core::UnitType{
         .id = kSwordsmanTypeId,
@@ -75,7 +58,8 @@ inline core::UnitType MakeSwordsmanType(core::Engine& engine) {
     type.actions.push_back(std::make_unique<AttackAction>(engine));
     type.actions.push_back(std::make_unique<MoveAction>(engine));
     const auto [it, inserted] = type.reactions.emplace(
-        std::type_index(typeid(core::ICollisionReaction)), std::make_unique<RestrictMoveReaction>());
+        std::type_index(typeid(core::ICollisionReaction)), std::make_unique<core::DefaultCollisionReaction>()
+    );
     assert(inserted && "reaction already registered for this interface");
     return type;
 }

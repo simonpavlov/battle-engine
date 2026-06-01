@@ -114,7 +114,7 @@ BreakConstructorInitializers: AfterColon
 EmptyLineBeforeAccessModifier: Always
 
 # Function
-AlignAfterOpenBracket: AlwaysBreak
+AlignAfterOpenBracket: BlockIndent
 AllowAllArgumentsOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
 BinPackArguments: false

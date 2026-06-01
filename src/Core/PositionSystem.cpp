@@ -3,6 +3,7 @@
 #include <Core/CollisionReaction.hpp>
 #include <Core/Destination.hpp>
 #include <Core/Engine.hpp>
+#include <Core/Speed.hpp>
 #include <algorithm>
 
 namespace sw::core {
@@ -57,17 +58,19 @@ struct CorePositionSystem : IPositionSystem {
             return false;
         }
 
-        bool blocked = false;
-        positions().forEach([&](UnitId other_id, Position& other_position) {
-            if (other_id == unit_to_move_id || other_position != target_position) {
-                return;
+        if (!moverIgnoresOccupants(unit_to_move_id)) {
+            bool blocked = false;
+            positions().forEach([&](UnitId other_id, Position& other_position) {
+                if (other_id == unit_to_move_id || other_position != target_position) {
+                    return;
+                }
+                if (!isMoveAllowed(other_id)) {
+                    blocked = true;
+                }
+            });
+            if (blocked) {
+                return false;
             }
-            if (!isMoveAllowed(other_id)) {
-                blocked = true;
-            }
-        });
-        if (blocked) {
-            return false;
         }
 
         positions().get(unit_to_move_id) = target_position;
@@ -107,36 +110,57 @@ struct CorePositionSystem : IPositionSystem {
             return false;
         }
 
-        const Position current = positions().get(id);
-        if (current == destination.target) {
+        if (positions().get(id) == destination.target) {
             destination.active = false;
-            marchEnded.emit(id, current);
+            marchEnded.emit(id, positions().get(id));
             return false;
         }
 
-        const Position next{
-            stepToward(current.x, destination.target.x),
-            stepToward(current.y, destination.target.y),
-        };
-        const bool moved_this_turn = move(id, next);  // emits `moved` on success
-        if (moved_this_turn && positions().get(id) == destination.target) {
-            destination.active = false;
-            marchEnded.emit(id, destination.target);
+        bool moved_any = false;
+        for (uint32_t step = 0; step < speedOf(id); ++step) {
+            const Position current = positions().get(id);
+            if (current == destination.target) {
+                break;
+            }
+            const Position next{
+                stepToward(current.x, destination.target.x),
+                stepToward(current.y, destination.target.y),
+            };
+            if (!move(id, next)) {  // emits `moved` on success
+                break;
+            }
+            moved_any = true;
+            if (positions().get(id) == destination.target) {
+                destination.active = false;
+                marchEnded.emit(id, destination.target);
+                break;
+            }
         }
-        return moved_this_turn;
+        return moved_any;
+    }
+
+    uint32_t speedOf(UnitId id) {
+        auto& speeds = engine.components.getComponent<Speed>();
+        return speeds.has(id) ? speeds.get(id).cells_per_turn : 1;
+    }
+
+    // TODO: refactor finding the type to a separate units-owner type, see: Engine.hpp TODOs
+    std::optional<std::reference_wrapper<ICollisionReaction>> collisionReactionOf(UnitId id) {
+        const auto type_it = engine.unit_to_type.find(id);
+        if (type_it == engine.unit_to_type.end()) {
+            return std::nullopt;
+        }
+        return type_it->second.get().findReaction<ICollisionReaction>();
+    }
+
+    bool moverIgnoresOccupants(UnitId mover_id) {
+        auto reaction = collisionReactionOf(mover_id);
+        return reaction && reaction->get().ignoresOccupants();
     }
 
     bool isMoveAllowed(UnitId occupant_id) {
-        const auto type_it = engine.unit_to_type.find(occupant_id);
-        if (type_it == engine.unit_to_type.end()) {
-            return true;
-        }
-        const auto& [_, type_ref] = *type_it;
-        auto reaction = type_ref.get().findReaction<ICollisionReaction>();
-        if (!reaction) {
-            return true;
-        }
-        return reaction->get().OnCollide() != CollideReaction::RestrictMove;
+        auto reaction = collisionReactionOf(occupant_id);
+        return !reaction || !reaction->get().blocksMovement();
     }
 
     ~CorePositionSystem() override = default;

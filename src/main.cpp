@@ -1,15 +1,21 @@
+#include <Core/Agility.hpp>
 #include <Core/Destination.hpp>
 #include <Core/Engine.hpp>
 #include <Core/Health.hpp>
 #include <Core/HealthSystem.hpp>
+#include <Core/Position.hpp>
 #include <Core/PositionSystem.hpp>
 #include <Core/RngSystem.hpp>
+#include <Core/Speed.hpp>
 #include <Core/Strength.hpp>
+#include <Core/Unit.hpp>
 #include <Features/Hunter.hpp>
+#include <Features/Raven.hpp>
 #include <Features/Swordsman.hpp>
 #include <IO/Commands/CreateMap.hpp>
 #include <IO/Commands/March.hpp>
 #include <IO/Commands/SpawnHunter.hpp>
+#include <IO/Commands/SpawnRaven.hpp>
 #include <IO/Commands/SpawnSwordsman.hpp>
 #include <IO/Events/MapCreated.hpp>
 #include <IO/Events/MarchEnded.hpp>
@@ -41,12 +47,16 @@ int main(int argc, char** argv) {
         engine.systems.registerSystem<core::IHealthSystem>(core::MakeCoreHealthSystem(engine));
         engine.systems.registerSystem<core::IRngSystem>(core::MakeCoreRngSystem());
 
-        engine.components.registerComponent<core::Position>();
         engine.components.registerComponent<core::Health>();
-        engine.components.registerComponent<core::Strength>();
+        engine.components.registerComponent<core::Position>();
+        engine.components.registerComponent<core::Speed>();
         engine.components.registerComponent<core::Destination>();
+        engine.components.registerComponent<core::Strength>();
+        engine.components.registerComponent<core::Agility>();
+        engine.components.registerComponent<core::Range>();
 
         engine.registerUnitType(feature::MakeSwordsmanType(engine));
+        engine.registerUnitType(feature::MakeRavenType(engine));
     }
 
     EventLog log;
@@ -54,17 +64,20 @@ int main(int argc, char** argv) {
         auto& ps = engine.systems.getSystem<core::IPositionSystem>();
         auto& hs = engine.systems.getSystem<core::IHealthSystem>();
         ps.onMapCreated().connect([&](uint32_t w, uint32_t h) { log.log(engine.tick, io::MapCreated{w, h}); });
-        ps.onMoved().connect(
-            [&](core::UnitId id, core::Position p) { log.log(engine.tick, io::UnitMoved{id.value, p.x, p.y}); });
+        ps.onMoved().connect([&](core::UnitId id, core::Position p) {
+            log.log(engine.tick, io::UnitMoved{id.value, p.x, p.y});
+        });
         ps.onMarchStarted().connect([&](core::UnitId id, core::Position from, core::Position to) {
             log.log(engine.tick, io::MarchStarted{id.value, from.x, from.y, to.x, to.y});
         });
-        ps.onMarchEnded().connect(
-            [&](core::UnitId id, core::Position p) { log.log(engine.tick, io::MarchEnded{id.value, p.x, p.y}); });
+        ps.onMarchEnded().connect([&](core::UnitId id, core::Position p) {
+            log.log(engine.tick, io::MarchEnded{id.value, p.x, p.y});
+        });
         hs.onAttacked().connect([&](core::UnitId src, core::UnitId tgt, int dmg, int tgt_hp) {
             log.log(
                 engine.tick,
-                io::UnitAttacked{src.value, tgt.value, static_cast<uint32_t>(dmg), static_cast<uint32_t>(tgt_hp)});
+                io::UnitAttacked{src.value, tgt.value, static_cast<uint32_t>(dmg), static_cast<uint32_t>(tgt_hp)}
+            );
         });
         engine.onSpawned().connect([&](core::UnitId id, std::string_view type, core::Position p) {
             log.log(engine.tick, io::UnitSpawned{id.value, std::string(type), p.x, p.y});
@@ -83,11 +96,20 @@ int main(int argc, char** argv) {
                     core::Position{c.x, c.y},
                     // TODO: change Core HP to uint32_t
                     static_cast<int>(c.hp),
-                    c.strength);
+                    c.strength
+                );
             })
-            .add<io::SpawnHunter>([&](io::SpawnHunter) { feature::spawnHunter(engine); })
-            .add<io::March>(
-                [&](io::March c) { ps.march(core::UnitId{c.unitId}, core::Position{c.targetX, c.targetY}); });
+            .add<io::SpawnHunter>([&](io::SpawnHunter c) {
+                feature::spawnHunter(
+                    engine, core::UnitId{c.unitId}, core::Position{c.x, c.y}, c.hp, c.strength, c.agility, c.range
+                );
+            })
+            .add<io::SpawnRaven>([&](io::SpawnRaven c) {
+                feature::spawnRaven(engine, core::UnitId{c.unitId}, core::Position{c.x, c.y}, c.agility);
+            })
+            .add<io::March>([&](io::March c) {
+                ps.march(core::UnitId{c.unitId}, core::Position{c.targetX, c.targetY});
+            });
         parser.parse(file);
     }
 

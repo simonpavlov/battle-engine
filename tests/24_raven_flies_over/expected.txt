@@ -1,0 +1,7 @@
+[1] MAP_CREATED width=3 height=1
+[1] UNIT_SPAWNED unitId=1 unitType=Raven x=0 y=0
+[1] UNIT_SPAWNED unitId=2 unitType=Swordsman x=1 y=0
+[1] MARCH_STARTED unitId=1 x=0 y=0 targetX=2 targetY=0
+[2] UNIT_MOVED unitId=1 x=1 y=0
+[2] UNIT_MOVED unitId=1 x=2 y=0
+[2] MARCH_ENDED unitId=1 x=2 y=0

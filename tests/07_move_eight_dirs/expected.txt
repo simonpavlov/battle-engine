@@ -1,0 +1,3 @@
+[1] MAP_CREATED width=10 height=10 
+[1] UNIT_SPAWNED unitId=1 unitType=Swordsman x=0 y=0 
+[1] MARCH_STARTED unitId=1 x=0 y=0 targetX=3 targetY=3 
