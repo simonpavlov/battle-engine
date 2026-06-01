@@ -10,4 +10,4 @@ struct Health {
     int hp;
 };
 
-}
+}  // namespace sw::core

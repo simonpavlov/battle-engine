@@ -26,4 +26,4 @@ struct SpawnHunter {
         visitor.visit("range", range);
     }
 };
-}
+}  // namespace sw::io

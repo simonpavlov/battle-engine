@@ -10,4 +10,4 @@ void printDebug(std::ostream& stream, TCommand& data) {
     data.visit(visitor);
     stream << "\n";
 }
-}
+}  // namespace sw

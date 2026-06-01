@@ -12,7 +12,7 @@ struct StrongType {
     friend bool operator==(const StrongType&, const StrongType&) = default;
 };
 
-}
+}  // namespace sw::core
 
 template <class T>
 struct std::hash<sw::core::StrongType<T>> {

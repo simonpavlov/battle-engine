@@ -1,6 +1,7 @@
 #include "PositionSystem.hpp"
 
 #include <Core/CollisionReaction.hpp>
+#include <Core/Destination.hpp>
 #include <Core/Engine.hpp>
 #include <algorithm>
 
@@ -12,6 +13,16 @@ uint32_t chebyshev(Position a, Position b) {
     const uint32_t dx = a.x > b.x ? a.x - b.x : b.x - a.x;
     const uint32_t dy = a.y > b.y ? a.y - b.y : b.y - a.y;
     return std::max(dx, dy);
+}
+
+uint32_t stepToward(uint32_t from, uint32_t to) {
+    if (to > from) {
+        return from + 1;
+    }
+    if (to < from) {
+        return from - 1;
+    }
+    return from;
 }
 
 struct CorePositionSystem : IPositionSystem {
@@ -29,6 +40,7 @@ struct CorePositionSystem : IPositionSystem {
     void setBounds(uint32_t w, uint32_t h) override {
         width = w;
         height = h;
+        mapCreated.emit(w, h);
     }
 
     Position getPosition(UnitId id) override {
@@ -59,6 +71,7 @@ struct CorePositionSystem : IPositionSystem {
         }
 
         positions().get(unit_to_move_id) = target_position;
+        moved.emit(unit_to_move_id, target_position);
         return true;
     }
 
@@ -76,7 +89,43 @@ struct CorePositionSystem : IPositionSystem {
         return result;
     }
 
-    // May others enter a cell occupied by this unit?
+    void march(UnitId id, Position target) override {
+        if (!positions().has(id)) {
+            return;
+        }
+        marchStarted.emit(id, positions().get(id), target);
+        engine.components.getComponent<Destination>().add(id, Destination{target, true});
+    }
+
+    bool advanceMarch(UnitId id) override {
+        auto& destinations = engine.components.getComponent<Destination>();
+        if (!destinations.has(id)) {
+            return false;
+        }
+        Destination& destination = destinations.get(id);
+        if (!destination.active) {
+            return false;
+        }
+
+        const Position current = positions().get(id);
+        if (current == destination.target) {
+            destination.active = false;
+            marchEnded.emit(id, current);
+            return false;
+        }
+
+        const Position next{
+            stepToward(current.x, destination.target.x),
+            stepToward(current.y, destination.target.y),
+        };
+        const bool moved_this_turn = move(id, next);  // emits `moved` on success
+        if (moved_this_turn && positions().get(id) == destination.target) {
+            destination.active = false;
+            marchEnded.emit(id, destination.target);
+        }
+        return moved_this_turn;
+    }
+
     bool isMoveAllowed(UnitId occupant_id) {
         const auto type_it = engine.unit_to_type.find(occupant_id);
         if (type_it == engine.unit_to_type.end()) {

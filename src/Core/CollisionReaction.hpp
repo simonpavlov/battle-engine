@@ -13,4 +13,4 @@ struct ICollisionReaction : IReaction {
     virtual CollideReaction OnCollide() = 0;
 };
 
-}
+}  // namespace sw::core

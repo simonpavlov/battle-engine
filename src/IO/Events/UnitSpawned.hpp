@@ -20,4 +20,4 @@ struct UnitSpawned {
         visitor.visit("y", y);
     }
 };
-}
+}  // namespace sw::io

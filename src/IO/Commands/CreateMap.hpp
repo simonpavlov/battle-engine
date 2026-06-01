@@ -16,4 +16,4 @@ struct CreateMap {
         visitor.visit("height", height);
     }
 };
-}
+}  // namespace sw::io

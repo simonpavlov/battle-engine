@@ -30,4 +30,4 @@ struct SystemsLocator {
     }
 };
 
-}
+}  // namespace sw::core

@@ -14,4 +14,4 @@ struct UnitDied {
         visitor.visit("unitId", unitId);
     }
 };
-}
+}  // namespace sw::io

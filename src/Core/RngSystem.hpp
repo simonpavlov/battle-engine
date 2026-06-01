@@ -20,4 +20,4 @@ using IRngSystemPtr = std::unique_ptr<IRngSystem>;
 
 IRngSystemPtr MakeCoreRngSystem();
 
-}
+}  // namespace sw::core

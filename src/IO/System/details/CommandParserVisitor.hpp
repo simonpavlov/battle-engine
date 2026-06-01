@@ -16,4 +16,4 @@ public:
         _stream >> field;
     }
 };
-}
+}  // namespace sw

@@ -4,6 +4,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <string>
 #include <typeindex>
 #include <unordered_map>
 #include <vector>
@@ -29,6 +30,7 @@ using UnitTypeId = StrongType<std::uint32_t>;
 
 struct UnitType {
     UnitTypeId id = {.value = 0};
+    std::string name;  // display name for UNIT_SPAWNED; set by the Feature that builds the blueprint
     std::vector<IActionPtr> actions;
     std::unordered_map<std::type_index, IReactionPtr> reactions;
 
@@ -44,4 +46,4 @@ struct UnitType {
 
 using UnitTypeRef = std::reference_wrapper<const UnitType>;
 
-}
+}  // namespace sw::core

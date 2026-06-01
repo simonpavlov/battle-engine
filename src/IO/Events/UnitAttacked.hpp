@@ -20,4 +20,4 @@ struct UnitAttacked {
         visitor.visit("targetHp", targetHp);
     }
 };
-}
+}  // namespace sw::io

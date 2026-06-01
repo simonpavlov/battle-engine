@@ -15,4 +15,4 @@ struct MapCreated {
         visitor.visit("height", height);
     }
 };
-}
+}  // namespace sw::io

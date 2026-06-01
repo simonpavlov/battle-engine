@@ -11,4 +11,4 @@ struct Destination {
     bool active;
 };
 
-}
+}  // namespace sw::core

@@ -18,4 +18,4 @@ struct March {
         visitor.visit("targetY", targetY);
     }
 };
-}
+}  // namespace sw::io

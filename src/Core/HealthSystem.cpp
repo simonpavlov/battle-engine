@@ -2,6 +2,7 @@
 
 #include <Core/Engine.hpp>
 #include <Core/Health.hpp>
+#include <algorithm>
 
 namespace sw::core {
 
@@ -25,10 +26,13 @@ struct CoreHealthSystem : IHealthSystem {
         return health().get(id).hp;
     }
 
-    void applyDamage(UnitId id, int amount) override {
-        auto& hp = health().get(id).hp;
-        if ((hp -= amount) <= 0) {
-            engine.scheduleDeath(id);
+    void applyDamage(UnitId source, UnitId target, int amount) override {
+        auto& hp = health().get(target).hp;
+        const bool was_alive = hp > 0;
+        hp -= amount;
+        attacked.emit(source, target, amount, std::max(hp, 0));
+        if (was_alive && hp <= 0) {
+            engine.scheduleDeath(target);
         }
     }
 
@@ -39,10 +43,10 @@ struct CoreHealthSystem : IHealthSystem {
     ~CoreHealthSystem() override = default;
 };
 
-}
+}  // namespace
 
 IHealthSystemPtr MakeCoreHealthSystem(Engine& engine) {
     return std::make_unique<CoreHealthSystem>(engine);
 }
 
-}
+}  // namespace sw::core

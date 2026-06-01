@@ -17,4 +17,4 @@ struct MarchEnded {
         visitor.visit("y", y);
     }
 };
-}
+}  // namespace sw::io

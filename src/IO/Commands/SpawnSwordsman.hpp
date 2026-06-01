@@ -22,4 +22,4 @@ struct SpawnSwordsman {
         visitor.visit("strength", strength);
     }
 };
-}
+}  // namespace sw::io

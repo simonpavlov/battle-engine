@@ -11,4 +11,4 @@ struct Position {
     friend bool operator==(const Position&, const Position&) = default;
 };
 
-}
+}  // namespace sw::core

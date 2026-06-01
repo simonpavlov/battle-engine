@@ -9,4 +9,4 @@ struct Strength {
     uint32_t value;
 };
 
-}
+}  // namespace sw::core

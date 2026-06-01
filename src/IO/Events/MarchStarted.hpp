@@ -21,4 +21,4 @@ struct MarchStarted {
         visitor.visit("targetY", targetY);
     }
 };
-}
+}  // namespace sw::io

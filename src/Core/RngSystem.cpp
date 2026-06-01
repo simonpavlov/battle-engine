@@ -26,10 +26,10 @@ struct CoreRngSystem : IRngSystem {
     ~CoreRngSystem() override = default;
 };
 
-}
+}  // namespace
 
 IRngSystemPtr MakeCoreRngSystem() {
     return std::make_unique<CoreRngSystem>();
 }
 
-}
+}  // namespace sw::core

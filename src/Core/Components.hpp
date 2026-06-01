@@ -36,7 +36,8 @@ struct DefaultComponentStore : IComponentStore<TData> {
     std::unordered_map<UnitId, TData> data;
 
     void add(UnitId id, TData&& value) override {
-        data.insert_or_assign(id, std::move(value));
+        const auto [it, inserted] = data.emplace(id, std::move(value));
+        assert(inserted && "component already registered for this unit_id");
     }
 
     void del(UnitId id) override {
@@ -91,4 +92,4 @@ struct ComponentsLocator {
     }
 };
 
-}
+}  // namespace sw::core

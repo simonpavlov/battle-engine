@@ -17,4 +17,4 @@ public:
         std::cout << std::endl;
     }
 };
-}
+}  // namespace sw

@@ -18,4 +18,4 @@ struct UnitMoved {
         visitor.visit("y", y);
     }
 };
-}
+}  // namespace sw::io

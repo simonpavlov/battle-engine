@@ -24,4 +24,4 @@ void CommandParser::parse(std::istream& stream) {
         command->second(commandStream);
     }
 }
-}
+}  // namespace sw::io

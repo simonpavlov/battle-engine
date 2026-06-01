@@ -30,4 +30,4 @@ public:
 
     void parse(std::istream& stream);
 };
-}
+}  // namespace sw::io
