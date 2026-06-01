@@ -16,10 +16,12 @@ using UnitTypes = std::unordered_map<UnitTypeId, UnitType>;
 using UnitToType = std::unordered_map<UnitId, UnitTypeRef>;
 
 struct Engine {
+    // TODO: move inside UnitStorage / UnitSystem
     Signal<UnitId, std::string_view, Position>::Sink onSpawned() {
         return spawned.sink();
     }
 
+    // TODO: move inside DeathSystem
     Signal<UnitId>::Sink onDied() {
         return died.sink();
     }
@@ -35,6 +37,11 @@ struct Engine {
 
     std::vector<UnitId> pending_deaths;
 
+    // TODO: introduce new IDeathSystem that would represent this method for Engine
+    // add DeathSystem that would contain the pending_deaths
+    // at the end of main while loop in run method call update method
+    // inside update delete do emit of died Signal
+    // Engine self sub on died -> delUnit
     void scheduleDeath(UnitId id) {
         pending_deaths.push_back(id);
     }
@@ -44,13 +51,12 @@ struct Engine {
         assert(inserted && "unit type already registered for this id");
     }
 
-    // TODO: extract with 3 unit collections to separate class UnitStorage (challendge class name)
+    // TODO: extract with 3 unit collections to separate class UnitStorage / UnitSystem (challendge class name)
     void addUnit(UnitTypeId unit_type_id, UnitId unit_id) {
         auto& type = unit_types.at(unit_type_id);
         const auto [it, inserted] = unit_to_type.emplace(unit_id, std::ref(type));
         assert(inserted && "unit already exists");
         creation_order.push_back(unit_id);
-        // Position is added before addUnit at every spawn site, so it is present here.
         spawned.emit(unit_id, type.name, components.getComponent<Position>().get(unit_id));
     }
 
@@ -94,8 +100,8 @@ struct Engine {
     }
 
 private:
-    Signal<UnitId, std::string_view, Position> spawned;  // id, type name, position
-    Signal<UnitId> died;                                 // id
+    Signal<UnitId, std::string_view, Position> spawned;
+    Signal<UnitId> died;
 };
 
 }  // namespace sw::core

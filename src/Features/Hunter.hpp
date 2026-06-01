@@ -19,7 +19,7 @@ namespace sw::feature {
 
 static const auto kHunterTypeId = core::UnitTypeId{333};
 
-inline core::UnitType MakeHunterType(core::Engine& engine) {
+inline core::UnitType makeHunterType(core::Engine& engine) {
     auto unit_type = core::UnitType{
         .id = kHunterTypeId,
         .name = "Hunter",
@@ -47,17 +47,13 @@ inline core::UnitType MakeHunterType(core::Engine& engine) {
 
     // Shadow Strike: melee fallback for Strength.
     unit_type.actions.push_back(
-        std::make_unique<AttackAction>(
-            engine,
-            core::kMeleeAttackKind,
-            [&engine](core::UnitId self) {
-                const auto strength = engine.components.getComponent<core::Strength>().get(self).value;
-                return core::AttackProperty{
-                    .band = {.min = core::Distance{1}, .max = core::Distance{1}},
-                    .damage = core::Damage{static_cast<int>(strength)},
-                };
-            }
-        )
+        std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
+            const auto strength = engine.components.getComponent<core::Strength>().get(self).value;
+            return core::AttackProperty{
+                .band = {.min = core::Distance{1}, .max = core::Distance{1}},
+                .damage = core::Damage{static_cast<int>(strength)},
+            };
+        })
     );
 
     unit_type.actions.push_back(std::make_unique<MoveAction>(engine));

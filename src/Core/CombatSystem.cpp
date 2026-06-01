@@ -70,7 +70,7 @@ struct CoreCombatSystem : ICombatSystem {
 
 }  // namespace
 
-ICombatSystemPtr MakeCoreCombatSystem(Engine& engine) {
+ICombatSystemPtr makeCoreCombatSystem(Engine& engine) {
     return std::make_unique<CoreCombatSystem>(engine);
 }
 

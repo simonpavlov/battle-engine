@@ -21,11 +21,13 @@ struct IHealthSystem : ISystem {
     virtual ~IHealthSystem() = default;
 
 protected:
-    Signal<UnitId, UnitId, int, int> attacked;  // source, target, damage, target hp after (clamped to 0)
+    // TODO: Signal-s should contains well-named structure parameters, like AttackedData {source, target, damage, target_hp}
+    // align with this rule every Signal definition
+    Signal<UnitId, UnitId, int, int> attacked;
 };
 
 using IHealthSystemPtr = std::unique_ptr<IHealthSystem>;
 
-IHealthSystemPtr MakeCoreHealthSystem(Engine& engine);
+IHealthSystemPtr makeCoreHealthSystem(Engine& engine);
 
 }  // namespace sw::core

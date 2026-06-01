@@ -12,6 +12,7 @@
 
 namespace sw::core {
 
+// TODO: rename Unit to Entity
 using UnitId = StrongType<std::uint32_t>;
 
 struct IAction {
@@ -29,9 +30,10 @@ using IReactionPtr = std::unique_ptr<IReaction>;
 
 using UnitTypeId = StrongType<std::uint32_t>;
 
+// TODO: rename Unit to Entity
 struct UnitType {
     UnitTypeId id = {.value = 0};
-    std::string name;  // display name for UNIT_SPAWNED; set by the Feature that builds the blueprint
+    std::string name;
     std::vector<IActionPtr> actions;
     std::unordered_map<std::type_index, IReactionPtr> reactions;
 

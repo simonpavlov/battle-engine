@@ -1,0 +1,12 @@
+Checks: >
+  -*,
+  readability-identifier-naming
+
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*'
+
+CheckOptions:
+  - key: readability-identifier-naming.FunctionCase
+    value: camelBack
+  - key: readability-identifier-naming.MethodCase
+    value: camelBack

@@ -18,22 +18,19 @@ namespace sw::feature {
 // performance
 static const auto kSwordsmanTypeId = core::UnitTypeId{.value = 11};
 
-inline core::UnitType MakeSwordsmanType(core::Engine& engine) {
+inline core::UnitType makeSwordsmanType(core::Engine& engine) {
     auto type = core::UnitType{
         .id = kSwordsmanTypeId,
         .name = "Swordsman",
     };
-    type.actions.push_back(std::make_unique<AttackAction>(
-        engine,
-        core::kMeleeAttackKind,
-        [&engine](core::UnitId self) {
-            const auto strength = engine.components.getComponent<core::Strength>().get(self).value;
-            return core::AttackProperty{
-                .band = {.min = core::Distance{1}, .max = core::Distance{1}},
-                .damage = core::Damage{static_cast<int>(strength)},
-            };
-        }
-    ));
+    // Melee Strike: adjacent attack for Strength.
+    type.actions.push_back(std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
+        const auto strength = engine.components.getComponent<core::Strength>().get(self).value;
+        return core::AttackProperty{
+            .band = {.min = core::Distance{1}, .max = core::Distance{1}},
+            .damage = core::Damage{static_cast<int>(strength)},
+        };
+    }));
     type.actions.push_back(std::make_unique<MoveAction>(engine));
     type.setReaction<core::ICollisionReaction>(std::make_unique<core::DefaultCollisionReaction>());
     return type;

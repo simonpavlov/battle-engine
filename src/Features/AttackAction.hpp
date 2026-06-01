@@ -11,9 +11,6 @@
 
 namespace sw::feature {
 
-// A single attack behavior, parameterized so one class covers melee and ranged for every unit.
-// Who is a legal target is decided by the CombatSystem; this action only supplies its reach (a
-// per-unit distance band), its damage, and an optional firing precondition.
 // TODO: move to core
 struct AttackAction : core::IAction {
     using PropertyFn = std::function<core::AttackProperty(core::UnitId)>;

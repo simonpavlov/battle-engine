@@ -5,15 +5,9 @@
 
 namespace sw::core {
 
-// A typed event channel owned by the producer that emits it. The signal's parameter list *is* the
-// event contract, so there is no separate event-struct vocabulary in Core. Subscribers (the logger,
-// or any system added later) connect through the producer's interface; emission is synchronous and
-// runs slots in connect order.
 template <class... TArgs>
 class Signal {
 public:
-    // Connect-only handle exposed to consumers. Holds no power to emit, so a subscriber can never
-    // fire an event it does not own — only the signal's owner (which holds the Signal itself) emits.
     class Sink {
     public:
         explicit Sink(Signal& signal) :

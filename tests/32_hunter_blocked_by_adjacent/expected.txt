@@ -1,0 +1,33 @@
+[1] MAP_CREATED width=10 height=10
+[1] UNIT_SPAWNED unitId=1 unitType=Hunter x=0 y=0
+[1] UNIT_SPAWNED unitId=2 unitType=Swordsman x=3 y=0
+[1] UNIT_SPAWNED unitId=3 unitType=Swordsman x=1 y=0
+[2] UNIT_ATTACKED attackerUnitId=1 targetUnitId=3 damage=7 targetHp=1
+[3] UNIT_ATTACKED attackerUnitId=1 targetUnitId=3 damage=7 targetHp=0
+[3] UNIT_DIED unitId=3
+[4] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=96
+[5] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=92
+[6] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=88
+[7] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=84
+[8] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=80
+[9] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=76
+[10] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=72
+[11] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=68
+[12] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=64
+[13] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=60
+[14] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=56
+[15] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=52
+[16] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=48
+[17] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=44
+[18] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=40
+[19] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=36
+[20] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=32
+[21] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=28
+[22] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=24
+[23] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=20
+[24] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=16
+[25] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=12
+[26] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=8
+[27] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=4
+[28] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=0
+[28] UNIT_DIED unitId=2

@@ -29,8 +29,6 @@ using IComponentPtr = std::unique_ptr<IComponent>;
 
 namespace detail {
 
-// Default component storage. Kept in `detail` so users never name a concrete store type; they only
-// ever go through ComponentsLocator::registerComponent<T>() / getComponent<T>().
 template <class TData>
 struct DefaultComponentStore : IComponentStore<TData> {
     std::unordered_map<UnitId, TData> data;
@@ -70,8 +68,6 @@ struct ComponentsLocator {
         assert(inserted && "component already registered for this data type");
     }
 
-    // Register a component using the default storage. The concrete store type lives in `detail`, so
-    // swapping it for another implementation is a one-line change for every component that uses this.
     template <class TData>
     void registerComponent() {
         registerComponent<TData>(std::make_unique<detail::DefaultComponentStore<TData>>());
@@ -84,7 +80,6 @@ struct ComponentsLocator {
         return static_cast<IComponentStore<TData>&>(*it->second);
     }
 
-    // Drop a unit from every registered store (used by end-of-tick death sweep).
     void removeUnitEverywhere(UnitId id) {
         for (auto& [type, component] : components) {
             component->del(id);

@@ -1,0 +1,7 @@
+[1] MAP_CREATED width=10 height=10
+[1] UNIT_SPAWNED unitId=1 unitType=Hunter x=0 y=0
+[1] UNIT_SPAWNED unitId=2 unitType=Raven x=2 y=0
+[2] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=6
+[3] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=2
+[4] UNIT_ATTACKED attackerUnitId=1 targetUnitId=2 damage=4 targetHp=0
+[4] UNIT_DIED unitId=2

@@ -8,9 +8,6 @@ namespace sw::core {
 namespace {
 
 struct CoreRngSystem : IRngSystem {
-    // Fixed seed for now: makes runs reproducible. Determinism is not required by the brief, but a
-    // stable stream is handy for testing/replay. Swap for std::random_device{}() if real randomness
-    // is wanted.
     std::mt19937 engine{0xC0FFEEu};
 
     UnitId pick(const std::vector<UnitId>& candidates) override {
@@ -28,7 +25,7 @@ struct CoreRngSystem : IRngSystem {
 
 }  // namespace
 
-IRngSystemPtr MakeCoreRngSystem() {
+IRngSystemPtr makeCoreRngSystem() {
     return std::make_unique<CoreRngSystem>();
 }
 

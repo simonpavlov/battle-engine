@@ -119,7 +119,7 @@ struct CorePositionSystem : IPositionSystem {
                 stepToward(current.x, destination.target.x),
                 stepToward(current.y, destination.target.y),
             };
-            if (!move(id, next)) {  // emits `moved` on success
+            if (!move(id, next)) {
                 break;
             }
             moved_any = true;
@@ -161,7 +161,7 @@ struct CorePositionSystem : IPositionSystem {
 
 }  // namespace
 
-IPositionSystemPtr MakeCorePositionSystem(Engine& engine) {
+IPositionSystemPtr makeCorePositionSystem(Engine& engine) {
     return std::make_unique<CorePositionSystem>(engine);
 }
 

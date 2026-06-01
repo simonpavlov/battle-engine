@@ -45,7 +45,7 @@ struct CoreHealthSystem : IHealthSystem {
 
 }  // namespace
 
-IHealthSystemPtr MakeCoreHealthSystem(Engine& engine) {
+IHealthSystemPtr makeCoreHealthSystem(Engine& engine) {
     return std::make_unique<CoreHealthSystem>(engine);
 }
 

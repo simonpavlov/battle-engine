@@ -44,10 +44,10 @@ int main(int argc, char** argv) {
 
     core::Engine engine;
     {
-        engine.systems.registerSystem<core::IPositionSystem>(core::MakeCorePositionSystem(engine));
-        engine.systems.registerSystem<core::IHealthSystem>(core::MakeCoreHealthSystem(engine));
-        engine.systems.registerSystem<core::ICombatSystem>(core::MakeCoreCombatSystem(engine));
-        engine.systems.registerSystem<core::IRngSystem>(core::MakeCoreRngSystem());
+        engine.systems.registerSystem<core::IPositionSystem>(core::makeCorePositionSystem(engine));
+        engine.systems.registerSystem<core::IHealthSystem>(core::makeCoreHealthSystem(engine));
+        engine.systems.registerSystem<core::ICombatSystem>(core::makeCoreCombatSystem(engine));
+        engine.systems.registerSystem<core::IRngSystem>(core::makeCoreRngSystem());
 
         auto& combat_system = engine.systems.getSystem<core::ICombatSystem>();
         combat_system.registerAttackKind(core::kMeleeAttackKind);
@@ -61,9 +61,9 @@ int main(int argc, char** argv) {
         engine.components.registerComponent<core::Agility>();
         engine.components.registerComponent<core::Range>();
 
-        engine.registerUnitType(feature::MakeSwordsmanType(engine));
-        engine.registerUnitType(feature::MakeHunterType(engine));
-        engine.registerUnitType(feature::MakeRavenType(engine));
+        engine.registerUnitType(feature::makeSwordsmanType(engine));
+        engine.registerUnitType(feature::makeHunterType(engine));
+        engine.registerUnitType(feature::makeRavenType(engine));
     }
 
     EventLog log;
