@@ -1,7 +1,7 @@
 #include "HealthSystem.hpp"
 
-#include <Core/Engine.hpp>
-#include <Core/Health.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
 #include <algorithm>
 
 namespace sw::core {

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core/Signal.hpp>
-#include <Core/Systems.hpp>
-#include <Core/Unit.hpp>
+#include <Core/Foundation/Signal.hpp>
+#include <Core/Foundation/Systems.hpp>
+#include <Core/Foundation/Unit.hpp>
 
 namespace sw::core {
 
@@ -18,7 +18,7 @@ struct IHealthSystem : ISystem {
     virtual void applyDamage(UnitId source, UnitId target, int amount) = 0;
     virtual bool isAlive(UnitId id) = 0;
 
-    virtual ~IHealthSystem() = default;
+    ~IHealthSystem() override = default;
 
 protected:
     // TODO: Signal-s should contains well-named structure parameters, like AttackedData {source, target, damage, target_hp}

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Core/Components.hpp>
-#include <Core/Position.hpp>
-#include <Core/Signal.hpp>
-#include <Core/Systems.hpp>
-#include <Core/Unit.hpp>
+#include <Core/Foundation/Components.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Foundation/Signal.hpp>
+#include <Core/Foundation/Systems.hpp>
+#include <Core/Foundation/Unit.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <string_view>
@@ -48,6 +48,8 @@ struct Engine {
 
     void registerUnitType(UnitType&& unit_type) {
         const auto [it, inserted] = unit_types.emplace(unit_type.id, std::move(unit_type));
+        (void)it;
+        (void)inserted;
         assert(inserted && "unit type already registered for this id");
     }
 
@@ -55,18 +57,20 @@ struct Engine {
     void addUnit(UnitTypeId unit_type_id, UnitId unit_id) {
         auto& type = unit_types.at(unit_type_id);
         const auto [it, inserted] = unit_to_type.emplace(unit_id, std::ref(type));
+        (void)it;
+        (void)inserted;
         assert(inserted && "unit already exists");
         creation_order.push_back(unit_id);
         spawned.emit(unit_id, type.name, components.getComponent<Position>().get(unit_id));
     }
 
     void delUnit(UnitId unit_id) {
-        if (unit_to_type.find(unit_id) == unit_to_type.end()) {
+        if (!unit_to_type.contains(unit_id)) {
             return;
         }
         died.emit(unit_id);
         unit_to_type.erase(unit_id);
-        creation_order.erase(std::remove(creation_order.begin(), creation_order.end(), unit_id), creation_order.end());
+        std::erase(creation_order, unit_id);
         components.removeUnitEverywhere(unit_id);
     }
 

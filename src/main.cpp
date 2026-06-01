@@ -1,18 +1,18 @@
-#include <Core/Agility.hpp>
-#include <Core/CombatSystem.hpp>
-#include <Core/Destination.hpp>
-#include <Core/Engine.hpp>
-#include <Core/Health.hpp>
-#include <Core/HealthSystem.hpp>
-#include <Core/Position.hpp>
-#include <Core/PositionSystem.hpp>
-#include <Core/RngSystem.hpp>
-#include <Core/Speed.hpp>
-#include <Core/Strength.hpp>
-#include <Core/Unit.hpp>
-#include <Features/Hunter.hpp>
-#include <Features/Raven.hpp>
-#include <Features/Swordsman.hpp>
+#include <Core/Modules/Stats/Agility.hpp>
+#include <Core/Modules/Combat/CombatSystem.hpp>
+#include <Core/Modules/Spatial/Destination.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
+#include <Core/Modules/Vitals/HealthSystem.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Modules/Spatial/PositionSystem.hpp>
+#include <Core/Modules/Rng/RngSystem.hpp>
+#include <Core/Modules/Stats/Speed.hpp>
+#include <Core/Modules/Stats/Strength.hpp>
+#include <Core/Foundation/Unit.hpp>
+#include <Features/Units/Hunter.hpp>
+#include <Features/Units/Raven.hpp>
+#include <Features/Units/Swordsman.hpp>
 #include <IO/Commands/CreateMap.hpp>
 #include <IO/Commands/March.hpp>
 #include <IO/Commands/SpawnHunter.hpp>
@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
             })
             .add<io::SpawnHunter>([&](io::SpawnHunter c) {
                 feature::spawnHunter(
-                    engine, core::UnitId{c.unitId}, core::Position{c.x, c.y}, c.hp, c.strength, c.agility, c.range
+                    engine, core::UnitId{c.unitId}, core::Position{.x = c.x, .y = c.y}, static_cast<int>(c.hp), c.strength, c.agility, c.range
                 );
             })
             .add<io::SpawnRaven>([&](io::SpawnRaven c) {

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Core/StrongType.hpp>
-#include <Core/Unit.hpp>
+#include <Core/Foundation/StrongType.hpp>
+#include <Core/Foundation/Unit.hpp>
 #include <cstdint>
 #include <variant>
 

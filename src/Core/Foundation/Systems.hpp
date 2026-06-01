@@ -19,6 +19,9 @@ struct SystemsLocator {
     template <class TSystemIFace>
     void registerSystem(ISystemPtr&& system) {
         const auto [it, inserted] = systems.emplace(std::type_index(typeid(TSystemIFace)), std::move(system));
+        (void)it;
+        (void)inserted;
+        // TODO: replace asserts across project to support error in release build
         assert(inserted && "system already registered for this interface");
     }
 

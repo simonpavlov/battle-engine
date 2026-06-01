@@ -1,8 +1,33 @@
 Checks: >
   -*,
-  readability-identifier-naming
+  bugprone-*,
+  cert-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -modernize-use-trailing-return-type,
+  -readability-identifier-length,
+  -bugprone-easily-swappable-parameters,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-special-member-functions,
+  -bugprone-std-namespace-modification,
+  -cert-dcl58-cpp,
+  -cppcoreguidelines-avoid-const-or-ref-data-members,
+  -bugprone-random-generator-seed,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
+  -cert-msc32-c,
+  -cert-msc51-cpp,
+  -modernize-use-designated-initializers,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -bugprone-exception-escape,
+  -performance-move-const-arg,
+  -readability-redundant-member-init,
+  -cppcoreguidelines-missing-std-forward,
+  -performance-avoid-endl
 
-WarningsAsErrors: ''
+WarningsAsErrors: '*'
 HeaderFilterRegex: '.*'
 
 CheckOptions:

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Unit.hpp>
+#include <Core/Foundation/Unit.hpp>
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -22,7 +22,7 @@ struct IComponentStore : IComponent {
     virtual TData& get(UnitId id) = 0;
     virtual void forEach(const std::function<void(UnitId, TData&)>& fn) = 0;
 
-    virtual ~IComponentStore() = default;
+    ~IComponentStore() override = default;
 };
 
 using IComponentPtr = std::unique_ptr<IComponent>;
@@ -35,7 +35,9 @@ struct DefaultComponentStore : IComponentStore<TData> {
 
     void add(UnitId id, TData&& value) override {
         const auto [it, inserted] = data.emplace(id, std::move(value));
-        assert(inserted && "component already registered for this unit_id");
+        (void)it;
+        (void)inserted;
+        assert(inserted && "component already exists for this unit");
     }
 
     void del(UnitId id) override {
@@ -65,7 +67,9 @@ struct ComponentsLocator {
     template <class TData>
     void registerComponent(IComponentPtr&& component) {
         const auto [it, inserted] = components.emplace(std::type_index(typeid(TData)), std::move(component));
-        assert(inserted && "component already registered for this data type");
+        (void)it;
+        (void)inserted;
+        assert(inserted && "component already registered for this type");
     }
 
     template <class TData>

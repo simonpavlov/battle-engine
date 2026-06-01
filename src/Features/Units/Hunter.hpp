@@ -1,17 +1,17 @@
 #pragma once
 
-#include <Core/Agility.hpp>
-#include <Core/CollisionReaction.hpp>
-#include <Core/CombatReaction.hpp>
-#include <Core/Engine.hpp>
-#include <Core/Health.hpp>
-#include <Core/Position.hpp>
-#include <Core/PositionSystem.hpp>
-#include <Core/Range.hpp>
-#include <Core/Strength.hpp>
-#include <Core/Unit.hpp>
-#include <Features/AttackAction.hpp>
-#include <Features/MoveAction.hpp>
+#include <Core/Modules/Stats/Agility.hpp>
+#include <Core/Modules/Spatial/CollisionReaction.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Modules/Spatial/PositionSystem.hpp>
+#include <Core/Modules/Combat/Range.hpp>
+#include <Core/Modules/Stats/Strength.hpp>
+#include <Core/Foundation/Unit.hpp>
+#include <Features/Actions/AttackAction.hpp>
+#include <Features/Actions/MoveAction.hpp>
 #include <cstdint>
 #include <memory>
 
@@ -23,6 +23,8 @@ inline core::UnitType makeHunterType(core::Engine& engine) {
     auto unit_type = core::UnitType{
         .id = kHunterTypeId,
         .name = "Hunter",
+        .actions = {},
+        .reactions = {},
     };
 
     // Rapid Shot: ranged 2..Range for Agility, but only when no unit stands in an adjacent cell.

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Core/CombatReaction.hpp>
-#include <Core/CombatSystem.hpp>
-#include <Core/Engine.hpp>
-#include <Core/HealthSystem.hpp>
-#include <Core/RngSystem.hpp>
-#include <Core/Unit.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
+#include <Core/Modules/Combat/CombatSystem.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Vitals/HealthSystem.hpp>
+#include <Core/Modules/Rng/RngSystem.hpp>
+#include <Core/Foundation/Unit.hpp>
 #include <functional>
 #include <utility>
 

@@ -1,8 +1,8 @@
 #include "CombatSystem.hpp"
 
-#include <Core/Engine.hpp>
-#include <Core/HealthSystem.hpp>
-#include <Core/PositionSystem.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Vitals/HealthSystem.hpp>
+#include <Core/Modules/Spatial/PositionSystem.hpp>
 #include <cassert>
 #include <functional>
 #include <limits>
@@ -23,6 +23,7 @@ struct CoreCombatSystem : ICombatSystem {
 
     void registerAttackKind(AttackKind kind) override {
         const bool inserted = registered_kinds.insert(kind).second;
+        (void)inserted;
         assert(inserted && "attack kind already registered");
     }
 
@@ -35,7 +36,7 @@ struct CoreCombatSystem : ICombatSystem {
     }
 
     std::vector<UnitId> selectTargets(UnitId self, AttackKind kind, DistanceBand base) override {
-        assert(registered_kinds.count(kind) && "attack kind not registered");
+        assert(registered_kinds.contains(kind) && "attack kind not registered");
 
         auto& position_system = engine.systems.getSystem<IPositionSystem>();
         auto& health_system = engine.systems.getSystem<IHealthSystem>();

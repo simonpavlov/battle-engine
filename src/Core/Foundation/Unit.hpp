@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/StrongType.hpp>
+#include <Core/Foundation/StrongType.hpp>
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -42,6 +42,8 @@ struct UnitType {
     template <typename TInterface>
     void setReaction(IReactionPtr reaction) {
         const auto [it, inserted] = reactions.emplace(std::type_index(typeid(TInterface)), std::move(reaction));
+        (void)it;
+        (void)inserted;
         assert(inserted && "reaction already registered for this interface");
     }
 

@@ -12,7 +12,7 @@ public:
             _stream(stream) {}
 
     template <class TField>
-    void visit(const char*, TField& field) {
+    void visit([[maybe_unused]] const char* name, TField& field) {
         _stream >> field;
     }
 };

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Position.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
 
 namespace sw::core {
 

@@ -1,15 +1,15 @@
 #pragma once
 
-#include <Core/Agility.hpp>
-#include <Core/CollisionReaction.hpp>
-#include <Core/CombatReaction.hpp>
-#include <Core/Engine.hpp>
-#include <Core/Health.hpp>
-#include <Core/Position.hpp>
-#include <Core/Speed.hpp>
-#include <Core/Unit.hpp>
-#include <Features/AttackAction.hpp>
-#include <Features/MoveAction.hpp>
+#include <Core/Modules/Stats/Agility.hpp>
+#include <Core/Modules/Spatial/CollisionReaction.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Modules/Stats/Speed.hpp>
+#include <Core/Foundation/Unit.hpp>
+#include <Features/Actions/AttackAction.hpp>
+#include <Features/Actions/MoveAction.hpp>
 #include <cstdint>
 #include <memory>
 
@@ -43,24 +43,26 @@ struct RavenTargetReaction : core::IOnTargetReaction {
 };
 
 inline core::UnitType makeRavenType(core::Engine& engine) {
-    auto type = core::UnitType{
+    auto unit_type = core::UnitType{
         .id = kRavenTypeId,
         .name = "Raven",
+        .actions = {},
+        .reactions = {},
     };
     // Talon Strike: adjacent attack for Agility.
-    type.actions.push_back(std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
+    unit_type.actions.push_back(std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
         const auto agility = engine.components.getComponent<core::Agility>().get(self).value;
         return core::AttackProperty{
             .band = {.min = core::Distance{1}, .max = core::Distance{1}},
             .damage = core::Damage{static_cast<int>(agility)},
         };
     }));
-    type.actions.push_back(std::make_unique<MoveAction>(engine));
+    unit_type.actions.push_back(std::make_unique<MoveAction>(engine));
     // Flight: moves over occupied cells without being blocked.
-    type.setReaction<core::ICollisionReaction>(std::make_unique<FlyingReaction>());
+    unit_type.setReaction<core::ICollisionReaction>(std::make_unique<FlyingReaction>());
     // Evasion: immune to melee, and reduces an incoming ranged attack's reach by one.
-    type.setReaction<core::IOnTargetReaction>(std::make_unique<RavenTargetReaction>());
-    return type;
+    unit_type.setReaction<core::IOnTargetReaction>(std::make_unique<RavenTargetReaction>());
+    return unit_type;
 }
 
 inline void spawnRaven(core::Engine& engine, core::UnitId id, core::Position pos, int hp, uint32_t agility) {

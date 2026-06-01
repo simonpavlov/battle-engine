@@ -8,7 +8,7 @@ namespace sw::core {
 namespace {
 
 struct CoreRngSystem : IRngSystem {
-    std::mt19937 engine{0xC0FFEEu};
+    std::mt19937 engine{0xC0FFEEU};
 
     UnitId pick(const std::vector<UnitId>& candidates) override {
         assert(!candidates.empty() && "pick from empty candidate set");

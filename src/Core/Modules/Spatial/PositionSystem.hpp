@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Core/Position.hpp>
-#include <Core/Signal.hpp>
-#include <Core/Systems.hpp>
-#include <Core/Unit.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Foundation/Signal.hpp>
+#include <Core/Foundation/Systems.hpp>
+#include <Core/Foundation/Unit.hpp>
 #include <cstdint>
 #include <vector>
 
@@ -41,7 +41,7 @@ struct IPositionSystem : ISystem {
 
     virtual bool advanceMarch(UnitId id) = 0;
 
-    virtual ~IPositionSystem() = default;
+    ~IPositionSystem() override = default;
 
 protected:
     Signal<uint32_t, uint32_t> mapCreated;

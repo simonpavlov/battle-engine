@@ -1,9 +1,9 @@
 #include "PositionSystem.hpp"
 
-#include <Core/CollisionReaction.hpp>
-#include <Core/Destination.hpp>
-#include <Core/Engine.hpp>
-#include <Core/Speed.hpp>
+#include <Core/Modules/Spatial/CollisionReaction.hpp>
+#include <Core/Modules/Spatial/Destination.hpp>
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Modules/Stats/Speed.hpp>
 
 namespace sw::core {
 
@@ -90,7 +90,7 @@ struct CorePositionSystem : IPositionSystem {
             return;
         }
         marchStarted.emit(id, positions().get(id), target);
-        engine.components.getComponent<Destination>().add(id, Destination{target, true});
+        engine.components.getComponent<Destination>().add(id, Destination{.target = target, .active = true});
     }
 
     bool advanceMarch(UnitId id) override {
@@ -116,8 +116,8 @@ struct CorePositionSystem : IPositionSystem {
                 break;
             }
             const Position next{
-                stepToward(current.x, destination.target.x),
-                stepToward(current.y, destination.target.y),
+                .x = stepToward(current.x, destination.target.x),
+                .y = stepToward(current.y, destination.target.y),
             };
             if (!move(id, next)) {
                 break;

@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core/CombatReaction.hpp>
-#include <Core/Systems.hpp>
-#include <Core/Unit.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
+#include <Core/Foundation/Systems.hpp>
+#include <Core/Foundation/Unit.hpp>
 #include <memory>
 #include <vector>
 
@@ -15,7 +15,7 @@ struct ICombatSystem : ISystem {
 
     virtual std::vector<UnitId> selectTargets(UnitId self, AttackKind kind, DistanceBand base) = 0;
 
-    virtual ~ICombatSystem() = default;
+    ~ICombatSystem() override = default;
 };
 
 using ICombatSystemPtr = std::unique_ptr<ICombatSystem>;
