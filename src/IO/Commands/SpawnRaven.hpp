@@ -10,6 +10,7 @@ struct SpawnRaven {
     uint32_t unitId{};
     uint32_t x{};
     uint32_t y{};
+    uint32_t hp{};
     uint32_t agility{};
 
     template <typename Visitor>
@@ -17,6 +18,7 @@ struct SpawnRaven {
         visitor.visit("unitId", unitId);
         visitor.visit("x", x);
         visitor.visit("y", y);
+        visitor.visit("hp", hp);
         visitor.visit("agility", agility);
     }
 };

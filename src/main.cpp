@@ -1,4 +1,5 @@
 #include <Core/Agility.hpp>
+#include <Core/CombatSystem.hpp>
 #include <Core/Destination.hpp>
 #include <Core/Engine.hpp>
 #include <Core/Health.hpp>
@@ -45,7 +46,12 @@ int main(int argc, char** argv) {
     {
         engine.systems.registerSystem<core::IPositionSystem>(core::MakeCorePositionSystem(engine));
         engine.systems.registerSystem<core::IHealthSystem>(core::MakeCoreHealthSystem(engine));
+        engine.systems.registerSystem<core::ICombatSystem>(core::MakeCoreCombatSystem(engine));
         engine.systems.registerSystem<core::IRngSystem>(core::MakeCoreRngSystem());
+
+        auto& combat_system = engine.systems.getSystem<core::ICombatSystem>();
+        combat_system.registerAttackKind(core::kMeleeAttackKind);
+        combat_system.registerAttackKind(core::kRangedAttackKind);
 
         engine.components.registerComponent<core::Health>();
         engine.components.registerComponent<core::Position>();
@@ -56,6 +62,7 @@ int main(int argc, char** argv) {
         engine.components.registerComponent<core::Range>();
 
         engine.registerUnitType(feature::MakeSwordsmanType(engine));
+        engine.registerUnitType(feature::MakeHunterType(engine));
         engine.registerUnitType(feature::MakeRavenType(engine));
     }
 
@@ -94,7 +101,8 @@ int main(int argc, char** argv) {
                     engine,
                     core::UnitId{c.unitId},
                     core::Position{c.x, c.y},
-                    // TODO: change Core HP to uint32_t
+                    // TODO: change Core HP to uint32_t, try to remove static_cast everywhere by changing types,
+                    // uint32_t better
                     static_cast<int>(c.hp),
                     c.strength
                 );
@@ -105,7 +113,9 @@ int main(int argc, char** argv) {
                 );
             })
             .add<io::SpawnRaven>([&](io::SpawnRaven c) {
-                feature::spawnRaven(engine, core::UnitId{c.unitId}, core::Position{c.x, c.y}, c.agility);
+                feature::spawnRaven(
+                    engine, core::UnitId{c.unitId}, core::Position{c.x, c.y}, static_cast<int>(c.hp), c.agility
+                );
             })
             .add<io::March>([&](io::March c) {
                 ps.march(core::UnitId{c.unitId}, core::Position{c.targetX, c.targetY});

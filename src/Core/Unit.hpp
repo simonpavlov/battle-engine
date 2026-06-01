@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Core/StrongType.hpp>
+#include <cassert>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -33,6 +34,14 @@ struct UnitType {
     std::string name;  // display name for UNIT_SPAWNED; set by the Feature that builds the blueprint
     std::vector<IActionPtr> actions;
     std::unordered_map<std::type_index, IReactionPtr> reactions;
+
+    // TODO: add helper addAction
+
+    template <typename TInterface>
+    void setReaction(IReactionPtr reaction) {
+        const auto [it, inserted] = reactions.emplace(std::type_index(typeid(TInterface)), std::move(reaction));
+        assert(inserted && "reaction already registered for this interface");
+    }
 
     template <typename T>
     std::optional<std::reference_wrapper<T>> findReaction() const {

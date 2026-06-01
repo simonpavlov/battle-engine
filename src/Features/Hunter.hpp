@@ -2,14 +2,15 @@
 
 #include <Core/Agility.hpp>
 #include <Core/CollisionReaction.hpp>
+#include <Core/CombatReaction.hpp>
 #include <Core/Engine.hpp>
 #include <Core/Health.hpp>
-#include <Core/HealthSystem.hpp>
+#include <Core/Position.hpp>
 #include <Core/PositionSystem.hpp>
 #include <Core/Range.hpp>
-#include <Core/RngSystem.hpp>
 #include <Core/Strength.hpp>
 #include <Core/Unit.hpp>
+#include <Features/AttackAction.hpp>
 #include <Features/MoveAction.hpp>
 #include <cstdint>
 #include <memory>
@@ -18,20 +19,49 @@ namespace sw::feature {
 
 static const auto kHunterTypeId = core::UnitTypeId{333};
 
-inline core::UnitType makeHunterType(core::Engine& engine) {
+inline core::UnitType MakeHunterType(core::Engine& engine) {
     auto unit_type = core::UnitType{
         .id = kHunterTypeId,
         .name = "Hunter",
     };
-    // unit_type.actions.push_back(std::make_unique<>(engine));
-    unit_type.actions.push_back(std::make_unique<MoveAction>(engine));
 
-    // TODO: extract boilerplate to UnitType method: SetReaction<>(), assert inside
-    const auto [it, inserted] = unit_type.reactions.emplace(
-        std::type_index(typeid(core::ICollisionReaction)), std::make_unique<core::DefaultCollisionReaction>()
+    // Rapid Shot: ranged 2..Range for Agility, but only when no unit stands in an adjacent cell.
+    unit_type.actions.push_back(
+        std::make_unique<AttackAction>(
+            engine,
+            core::kRangedAttackKind,
+            [&engine](core::UnitId self) {
+                const auto range = engine.components.getComponent<core::Range>().get(self).range;
+                const auto agility = engine.components.getComponent<core::Agility>().get(self).value;
+                return core::AttackProperty{
+                    .band = {.min = core::Distance{2}, .max = core::Distance{range}},
+                    .damage = core::Damage{static_cast<int>(agility)},
+                };
+            },
+            [&engine](core::UnitId self) {
+                auto& position_system = engine.systems.getSystem<core::IPositionSystem>();
+                return position_system.unitsInRange(position_system.getPosition(self), 1, 1, self).empty();
+            }
+        )
     );
-    assert(inserted && "reaction already registered for this interface");
 
+    // Shadow Strike: melee fallback for Strength.
+    unit_type.actions.push_back(
+        std::make_unique<AttackAction>(
+            engine,
+            core::kMeleeAttackKind,
+            [&engine](core::UnitId self) {
+                const auto strength = engine.components.getComponent<core::Strength>().get(self).value;
+                return core::AttackProperty{
+                    .band = {.min = core::Distance{1}, .max = core::Distance{1}},
+                    .damage = core::Damage{static_cast<int>(strength)},
+                };
+            }
+        )
+    );
+
+    unit_type.actions.push_back(std::make_unique<MoveAction>(engine));
+    unit_type.setReaction<core::ICollisionReaction>(std::make_unique<core::DefaultCollisionReaction>());
     return unit_type;
 }
 

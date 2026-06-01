@@ -6,7 +6,9 @@
 
 namespace sw::feature {
 
+// TODO: move to core
 struct MoveAction : core::IAction {
+    // TODO: Action shouldn't reference to all core::Engine&, only systems
     explicit MoveAction(core::Engine& engine) :
             engine(engine) {}
 

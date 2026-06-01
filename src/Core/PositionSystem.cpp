@@ -4,17 +4,10 @@
 #include <Core/Destination.hpp>
 #include <Core/Engine.hpp>
 #include <Core/Speed.hpp>
-#include <algorithm>
 
 namespace sw::core {
 
 namespace {
-
-uint32_t chebyshev(Position a, Position b) {
-    const uint32_t dx = a.x > b.x ? a.x - b.x : b.x - a.x;
-    const uint32_t dy = a.y > b.y ? a.y - b.y : b.y - a.y;
-    return std::max(dx, dy);
-}
 
 uint32_t stepToward(uint32_t from, uint32_t to) {
     if (to > from) {
