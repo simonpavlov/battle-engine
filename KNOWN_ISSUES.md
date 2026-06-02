@@ -1,3 +1,49 @@
-# **Известные недостатки и сомнения по решению**
-1. ...
-2. ...
+# Известные недостатки и сомнения по решению
+
+## Errors are asserts only
+
+Invariants are guarded by `assert`, which is compiled out in release, so bad scenarios silently corrupt state. Only the parser throws (on an unknown command). `Systems.hpp:24` even carries a `// TODO: replace asserts across project to support error in release build`.
+
+Planned strategy: recoverable or bad-input cases (spawn, march) return a `[[nodiscard]] std::expected` to the command handler, which logs and skips; invariants (missing component, double registration) throw and are caught once at top level.
+
+## No spawn validation
+
+`spawnHunter`, `spawnSwordsman` and `spawnRaven` add a `Position` unconditionally, with no map-bounds check and no occupancy check. A duplicate `unitId` only trips an `assert` in `UnitSystem::addUnit`. The README requires unique Ids and one occupant per cell.
+
+## Action / Reaction interfaces are under-parameterized
+
+The reaction seam exists (`ICollisionReaction`, `IOnTargetReaction`) and already powers the Raven, but each interface still exposes only what today's units consume. Some richer behavior needs an interface change, not just a new Feature class.
+
+- `IAction::tryExecute(self)` has no turn/tick, so cooldowns or timed effects have no clean home. `Engine::tick` exists and is consumed (it stamps every logged event in `main.cpp`), but it's a bare public mutable field rather than an `ITimeSystem::currentTick()`, so an action cannot reach it. Returning `bool` also conflates "couldn't", "didn't" and "failed" with no error channel (see *Errors are asserts only*).
+- `ICollisionReaction` methods are nullary. `blocksMovement()` and `ignoresOccupants()` are constants per type (enough for the flying Raven), but they can't see the (mover, occupant) pair, which blocks team/faction-aware collision.
+- `IOnTargetReaction::onTargeted(kind, base)` lacks attacker and self. "Untargetable by melee" and "ranged reach −1" are already expressible (the Raven implements both), but attacker-dependent or self-stat-scaled evasion is not, because the hook receives neither the attacker nor the defender's id.
+- There is no on-damage hook. `IOnTargetReaction` is pre-target (it modifies reach), not post-hit, so armor, mitigation and retaliation are not expressible. `applyDamage` only subtracts and emits `UNIT_ATTACKED`.
+
+## No healing primitive (blocks Лекарь)
+
+`AttackAction` rejects `damage ≤ 0` (`AttackAction.hpp:33`) and `applyDamage` only ever subtracts and emits `UNIT_ATTACKED`. A Healer would need a `HealAction`, a `UNIT_HEALED` event, and clamping to `max_hp` (which exists on `Health` but is currently unused).
+
+Death is latched, not re-evaluated. `applyDamage` calls `scheduleDeath` the moment HP crosses ≤ 0 (`HealthSystem.cpp:31-32`); `UnitSystem::sweep` then deletes the pending set unconditionally with no HP re-check (`UnitSystem.cpp:40-45`). So if a Healer restored HP > 0 later in the same step, the unit would still die and the heal would be wasted. The README phrases death as a condition («При HP ≤ 0 … исчезает перед началом следующего»), so the fix is to re-evaluate at sweep: `applyDamage` only subtracts, and `sweep` removes units still ≤ 0. Keep `scheduleDeath` as a separate explicit path for HP-less self-removal (e.g. a Mine after exploding).
+
+## A unit's definition is split across two functions
+
+`makeXType` declares behavior (actions and reactions); `spawnX` declares data (which components get added). There is no compile-time check that the two agree: `makeHunterType`'s attack lambda reads the `Range` and `Agility` components, but a different function (`spawnHunter`) must remember to add them, so a mismatch surfaces only as a runtime assert. The data-vs-behavior split within the file is non-obvious to a new developer.
+
+## Actions live on `UnitType`, not per-`Unit`
+
+Action objects are shared by all units of a type (`tryExecute(self_id)` looks up per-unit data in components). This was chosen over per-instance actions deliberately:
+
+- Pro: one home for state (components), no per-spawn allocations, and adding a type is one factory, which fits the ECS.
+- Con: actions must be stateless, since a member field on an action would corrupt every unit of that type. This rule is implicit.
+- Per-instance or runtime-mutable behavior is not supported. It isn't needed here (no upgrades or pickups) and would reintroduce an entity object.
+
+Per-unit state goes in a component (e.g. `Destination` for marching, or an "armed" flag for a future Mine).
+
+## Hunter "no adjacent unit → can shoot" counts non-occupying units
+
+Rapid Shot is gated by `unitsInRange(dist 1..1)`, which includes a flying Raven that doesn't occupy a cell. Whether an adjacent Raven should block the shot is a spec ambiguity; current behavior blocks it (test `34` locks this in).
+
+## O(N) scans in move occupancy / targeting
+
+`move` and `unitsInRange` `forEach` over all positions, which is O(N) per query and O(N^2) per turn. This is deliberate (the README says to ignore performance).
+Possible fix: a cell→unitId index (grid or hash) updated on move/spawn/death; occupancy becomes O(1) and range queries scan a small window.
