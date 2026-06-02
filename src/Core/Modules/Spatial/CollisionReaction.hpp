@@ -9,7 +9,8 @@ struct ICollisionReaction : IReaction {
     virtual bool ignoresOccupants() = 0;
 };
 
-struct DefaultCollisionReaction : ICollisionReaction {
+class DefaultCollisionReaction : public ICollisionReaction {
+public:
     bool blocksMovement() override {
         return true;
     }

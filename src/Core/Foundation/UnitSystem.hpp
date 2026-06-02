@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/Signal.hpp>
 #include <Core/Foundation/Systems.hpp>
 #include <Core/Foundation/Unit.hpp>
@@ -10,18 +11,16 @@
 
 namespace sw::core {
 
-struct Engine;
-
 using UnitTypes = std::unordered_map<UnitTypeId, UnitType>;
 using UnitToType = std::unordered_map<UnitId, UnitTypeRef>;
 
 struct IUnitSystem : ISystem {
     Signal<events::Spawned>::Sink onSpawned() {
-        return spawned.sink();
+        return spawned_.sink();
     }
 
     Signal<events::Died>::Sink onDied() {
-        return died.sink();
+        return died_.sink();
     }
 
     virtual void registerUnitType(UnitType&& unit_type) = 0;
@@ -37,12 +36,12 @@ struct IUnitSystem : ISystem {
     ~IUnitSystem() override = default;
 
 protected:
-    Signal<events::Spawned> spawned;
-    Signal<events::Died> died;
+    Signal<events::Spawned> spawned_;
+    Signal<events::Died> died_;
 };
 
 using IUnitSystemPtr = std::unique_ptr<IUnitSystem>;
 
-IUnitSystemPtr makeCoreUnitSystem(Engine& engine);
+IUnitSystemPtr makeCoreUnitSystem(ComponentsLocator& components);
 
 }  // namespace sw::core

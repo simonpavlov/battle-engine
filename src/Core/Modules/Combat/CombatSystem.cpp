@@ -1,6 +1,5 @@
 #include "CombatSystem.hpp"
 
-#include <Core/Foundation/Engine.hpp>
 #include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Spatial/PositionSystem.hpp>
 #include <Core/Modules/Vitals/HealthSystem.hpp>
@@ -14,28 +13,22 @@ namespace sw::core {
 
 namespace {
 
-struct CoreCombatSystem : ICombatSystem {
-    explicit CoreCombatSystem(Engine& engine) :
-            engine(engine) {}
-
-    Engine& engine;
-    std::unordered_set<AttackKind> registered_kinds;
+class CoreCombatSystem : public ICombatSystem {
+public:
+    explicit CoreCombatSystem(SystemsLocator& systems) :
+            systems_(systems) {}
 
     void registerAttackKind(AttackKind kind) override {
-        const bool inserted = registered_kinds.insert(kind).second;
+        const bool inserted = registered_kinds_.insert(kind).second;
         (void)inserted;
         assert(inserted && "attack kind already registered");
     }
 
-    std::optional<std::reference_wrapper<IOnTargetReaction>> onTargetReactionOf(UnitId id) const {
-        return engine.systems.getSystem<IUnitSystem>().getUnitType(id).findReaction<IOnTargetReaction>();
-    }
-
     std::vector<UnitId> selectTargets(UnitId self, AttackKind kind, DistanceBand base) override {
-        assert(registered_kinds.contains(kind) && "attack kind not registered");
+        assert(registered_kinds_.contains(kind) && "attack kind not registered");
 
-        auto& position_system = engine.systems.getSystem<IPositionSystem>();
-        auto& health_system = engine.systems.getSystem<IHealthSystem>();
+        auto& position_system = systems_.getSystem<IPositionSystem>();
+        auto& health_system = systems_.getSystem<IHealthSystem>();
         const components::Position self_position = position_system.getPosition(self);
 
         std::vector<UnitId> targets;
@@ -63,12 +56,20 @@ struct CoreCombatSystem : ICombatSystem {
     }
 
     ~CoreCombatSystem() override = default;
+
+private:
+    std::optional<std::reference_wrapper<IOnTargetReaction>> onTargetReactionOf(UnitId id) const {
+        return systems_.getSystem<IUnitSystem>().getUnitType(id).findReaction<IOnTargetReaction>();
+    }
+
+    SystemsLocator& systems_;
+    std::unordered_set<AttackKind> registered_kinds_;
 };
 
 }  // namespace
 
-ICombatSystemPtr makeCoreCombatSystem(Engine& engine) {
-    return std::make_unique<CoreCombatSystem>(engine);
+ICombatSystemPtr makeCoreCombatSystem(SystemsLocator& systems) {
+    return std::make_unique<CoreCombatSystem>(systems);
 }
 
 }  // namespace sw::core

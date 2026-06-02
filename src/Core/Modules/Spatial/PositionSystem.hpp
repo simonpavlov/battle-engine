@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/Signal.hpp>
 #include <Core/Foundation/Systems.hpp>
 #include <Core/Foundation/Unit.hpp>
@@ -10,23 +11,21 @@
 
 namespace sw::core {
 
-struct Engine;
-
 struct IPositionSystem : ISystem {
     Signal<events::MapCreated>::Sink onMapCreated() {
-        return mapCreated.sink();
+        return mapCreated_.sink();
     }
 
     Signal<events::MarchStarted>::Sink onMarchStarted() {
-        return marchStarted.sink();
+        return marchStarted_.sink();
     }
 
     Signal<events::Moved>::Sink onMoved() {
-        return moved.sink();
+        return moved_.sink();
     }
 
     Signal<events::MarchEnded>::Sink onMarchEnded() {
-        return marchEnded.sink();
+        return marchEnded_.sink();
     }
 
     virtual void setBounds(uint32_t width, uint32_t height) = 0;
@@ -46,14 +45,14 @@ struct IPositionSystem : ISystem {
     ~IPositionSystem() override = default;
 
 protected:
-    Signal<events::MapCreated> mapCreated;
-    Signal<events::MarchStarted> marchStarted;
-    Signal<events::Moved> moved;
-    Signal<events::MarchEnded> marchEnded;
+    Signal<events::MapCreated> mapCreated_;
+    Signal<events::MarchStarted> marchStarted_;
+    Signal<events::Moved> moved_;
+    Signal<events::MarchEnded> marchEnded_;
 };
 
 using IPositionSystemPtr = std::unique_ptr<IPositionSystem>;
 
-IPositionSystemPtr makeCorePositionSystem(Engine& engine);
+IPositionSystemPtr makeCorePositionSystem(ComponentsLocator& components, SystemsLocator& systems);
 
 }  // namespace sw::core

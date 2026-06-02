@@ -1,22 +1,22 @@
 #pragma once
 
-#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/Systems.hpp>
 #include <Core/Foundation/Unit.hpp>
 #include <Core/Modules/Spatial/PositionSystem.hpp>
 
 namespace sw::feature {
 
-// TODO: move to core
-struct MoveAction : core::IAction {
-    // TODO: Action shouldn't reference to all core::Engine&, only systems
-    explicit MoveAction(core::Engine& engine) :
-            engine(engine) {}
-
-    core::Engine& engine;
+class MoveAction : public core::IAction {
+public:
+    explicit MoveAction(core::SystemsLocator& systems) :
+            systems_(systems) {}
 
     bool tryExecute(core::UnitId self_id) override {
-        return engine.systems.getSystem<core::IPositionSystem>().advanceMarch(self_id);
+        return systems_.getSystem<core::IPositionSystem>().advanceMarch(self_id);
     }
+
+private:
+    core::SystemsLocator& systems_;
 };
 
 }  // namespace sw::feature

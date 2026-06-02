@@ -8,6 +8,7 @@
 #include <string>
 #include <typeindex>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace sw::core {
@@ -34,7 +35,10 @@ struct UnitType {
     std::vector<IActionPtr> actions;
     std::unordered_map<std::type_index, IReactionPtr> reactions;
 
-    // TODO: add helper addAction
+    template <typename TAction, typename... TArgs>
+    void addAction(TArgs&&... args) {
+        actions.push_back(std::make_unique<TAction>(std::forward<TArgs>(args)...));
+    }
 
     template <typename TInterface>
     void setReaction(IReactionPtr reaction) {

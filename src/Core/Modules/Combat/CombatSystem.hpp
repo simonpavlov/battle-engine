@@ -8,8 +8,6 @@
 
 namespace sw::core {
 
-struct Engine;
-
 struct ICombatSystem : ISystem {
     virtual void registerAttackKind(AttackKind kind) = 0;
 
@@ -20,6 +18,6 @@ struct ICombatSystem : ISystem {
 
 using ICombatSystemPtr = std::unique_ptr<ICombatSystem>;
 
-ICombatSystemPtr makeCoreCombatSystem(Engine& engine);
+ICombatSystemPtr makeCoreCombatSystem(SystemsLocator& systems);
 
 }  // namespace sw::core

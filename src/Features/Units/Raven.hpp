@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/Unit.hpp>
 #include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Combat/CombatReaction.hpp>
@@ -20,7 +20,8 @@ inline const core::UnitTypeId& ravenTypeId() {
     return id;
 }
 
-struct FlyingReaction : core::ICollisionReaction {
+class FlyingReaction : public core::ICollisionReaction {
+public:
     bool blocksMovement() override {
         return false;
     }
@@ -30,7 +31,8 @@ struct FlyingReaction : core::ICollisionReaction {
     }
 };
 
-struct RavenTargetReaction : core::IOnTargetReaction {
+class RavenTargetReaction : public core::IOnTargetReaction {
+public:
     core::TargetResponse onTargeted(core::AttackKind kind, core::DistanceBand base) override {
         if (kind == core::kMeleeAttackKind) {
             return core::Untargetable{};
@@ -45,23 +47,21 @@ struct RavenTargetReaction : core::IOnTargetReaction {
     }
 };
 
-inline core::UnitType makeRavenType(core::Engine& engine) {
+inline core::UnitType makeRavenType(core::ComponentsLocator& components, core::SystemsLocator& systems) {
     auto unit_type = core::UnitType{
         .id = ravenTypeId(),
         .actions = {},
         .reactions = {},
     };
     // Talon Strike: adjacent attack for Agility.
-    unit_type.actions.push_back(
-        std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
-            const auto agility = engine.components.getComponent<core::components::Agility>().get(self);
-            return core::AttackProperty{
-                .band = {.min = core::Distance{1}, .max = core::Distance{1}},
-                .damage = core::Damage{agility.value},
-            };
-        })
-    );
-    unit_type.actions.push_back(std::make_unique<MoveAction>(engine));
+    unit_type.addAction<AttackAction>(systems, core::kMeleeAttackKind, [&components](core::UnitId self) {
+        const auto agility = components.getComponent<core::components::Agility>().get(self);
+        return core::AttackProperty{
+            .band = {.min = core::Distance{1}, .max = core::Distance{1}},
+            .damage = core::Damage{agility.value},
+        };
+    });
+    unit_type.addAction<MoveAction>(systems);
     // Flight: moves over occupied cells without being blocked.
     unit_type.setReaction<core::ICollisionReaction>(std::make_unique<FlyingReaction>());
     // Evasion: immune to melee, and reduces an incoming ranged attack's reach by one.
@@ -91,14 +91,12 @@ struct SpawnRaven {
 
 }  // namespace commands
 
-inline void spawnRaven(core::Engine& engine, commands::SpawnRaven cmd) {
-    engine.components.getComponent<core::components::Position>().add(cmd.unitId, std::move(cmd.pos));
-    engine.components.getComponent<core::components::Health>().add(
-        cmd.unitId, core::components::Health{cmd.hp, cmd.hp}
-    );
-    engine.components.getComponent<core::components::Speed>().add(cmd.unitId, core::components::Speed{2});
-    engine.components.getComponent<core::components::Agility>().add(cmd.unitId, std::move(cmd.agility));
-    engine.systems.getSystem<core::IUnitSystem>().addUnit(ravenTypeId(), cmd.unitId);
+inline void spawnRaven(core::ComponentsLocator& components, core::SystemsLocator& systems, commands::SpawnRaven cmd) {
+    components.getComponent<core::components::Position>().add(cmd.unitId, std::move(cmd.pos));
+    components.getComponent<core::components::Health>().add(cmd.unitId, core::components::Health{cmd.hp, cmd.hp});
+    components.getComponent<core::components::Speed>().add(cmd.unitId, core::components::Speed{2});
+    components.getComponent<core::components::Agility>().add(cmd.unitId, std::move(cmd.agility));
+    systems.getSystem<core::IUnitSystem>().addUnit(ravenTypeId(), cmd.unitId);
 }
 
 }  // namespace sw::feature

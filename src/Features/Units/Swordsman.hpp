@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/Unit.hpp>
 #include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Combat/CombatReaction.hpp>
@@ -19,23 +19,21 @@ inline const core::UnitTypeId& swordsmanTypeId() {
     return id;
 }
 
-inline core::UnitType makeSwordsmanType(core::Engine& engine) {
+inline core::UnitType makeSwordsmanType(core::ComponentsLocator& components, core::SystemsLocator& systems) {
     auto unit_type = core::UnitType{
         .id = swordsmanTypeId(),
         .actions = {},
         .reactions = {},
     };
     // Melee Strike: adjacent attack for Strength.
-    unit_type.actions.push_back(
-        std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
-            const auto strength = engine.components.getComponent<core::components::Strength>().get(self);
-            return core::AttackProperty{
-                .band = {.min = core::Distance{1}, .max = core::Distance{1}},
-                .damage = core::Damage{strength.value},
-            };
-        })
-    );
-    unit_type.actions.push_back(std::make_unique<MoveAction>(engine));
+    unit_type.addAction<AttackAction>(systems, core::kMeleeAttackKind, [&components](core::UnitId self) {
+        const auto strength = components.getComponent<core::components::Strength>().get(self);
+        return core::AttackProperty{
+            .band = {.min = core::Distance{1}, .max = core::Distance{1}},
+            .damage = core::Damage{strength.value},
+        };
+    });
+    unit_type.addAction<MoveAction>(systems);
     unit_type.setReaction<core::ICollisionReaction>(std::make_unique<core::DefaultCollisionReaction>());
     return unit_type;
 }
@@ -62,13 +60,13 @@ struct SpawnSwordsman {
 
 }  // namespace commands
 
-inline void spawnSwordsman(core::Engine& engine, commands::SpawnSwordsman cmd) {
-    engine.components.getComponent<core::components::Position>().add(cmd.unitId, std::move(cmd.pos));
-    engine.components.getComponent<core::components::Health>().add(
-        cmd.unitId, core::components::Health{cmd.hp, cmd.hp}
-    );
-    engine.components.getComponent<core::components::Strength>().add(cmd.unitId, std::move(cmd.strength));
-    engine.systems.getSystem<core::IUnitSystem>().addUnit(swordsmanTypeId(), cmd.unitId);
+inline void spawnSwordsman(
+    core::ComponentsLocator& components, core::SystemsLocator& systems, commands::SpawnSwordsman cmd
+) {
+    components.getComponent<core::components::Position>().add(cmd.unitId, std::move(cmd.pos));
+    components.getComponent<core::components::Health>().add(cmd.unitId, core::components::Health{cmd.hp, cmd.hp});
+    components.getComponent<core::components::Strength>().add(cmd.unitId, std::move(cmd.strength));
+    systems.getSystem<core::IUnitSystem>().addUnit(swordsmanTypeId(), cmd.unitId);
 }
 
 }  // namespace sw::feature

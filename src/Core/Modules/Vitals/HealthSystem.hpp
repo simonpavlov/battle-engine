@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/Signal.hpp>
 #include <Core/Foundation/Systems.hpp>
 #include <Core/Foundation/Unit.hpp>
@@ -8,11 +9,9 @@
 
 namespace sw::core {
 
-struct Engine;
-
 struct IHealthSystem : ISystem {
     Signal<events::Attacked>::Sink onAttacked() {
-        return attacked.sink();
+        return attacked_.sink();
     }
 
     virtual bool has(UnitId id) = 0;
@@ -24,11 +23,11 @@ struct IHealthSystem : ISystem {
     ~IHealthSystem() override = default;
 
 protected:
-    Signal<events::Attacked> attacked;
+    Signal<events::Attacked> attacked_;
 };
 
 using IHealthSystemPtr = std::unique_ptr<IHealthSystem>;
 
-IHealthSystemPtr makeCoreHealthSystem(Engine& engine);
+IHealthSystemPtr makeCoreHealthSystem(ComponentsLocator& components, SystemsLocator& systems);
 
 }  // namespace sw::core

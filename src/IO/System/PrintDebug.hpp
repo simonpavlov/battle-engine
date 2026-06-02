@@ -3,6 +3,7 @@
 #include "details/PrintFieldVisitor.hpp"
 
 namespace sw {
+
 template <typename TCommand>
 void printDebug(std::ostream& stream, TCommand& data) {
     stream << data.Name << ' ';
@@ -10,4 +11,5 @@ void printDebug(std::ostream& stream, TCommand& data) {
     data.visit(visitor);
     stream << "\n";
 }
+
 }  // namespace sw

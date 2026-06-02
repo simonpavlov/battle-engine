@@ -30,33 +30,35 @@ using IComponentPtr = std::unique_ptr<IComponent>;
 namespace detail {
 
 template <class TData>
-struct DefaultComponentStore : IComponentStore<TData> {
-    std::unordered_map<UnitId, TData> data;
-
+class DefaultComponentStore : public IComponentStore<TData> {
+public:
     void add(UnitId id, TData&& value) override {
-        const auto [it, inserted] = data.emplace(id, std::move(value));
+        const auto [it, inserted] = data_.emplace(id, std::move(value));
         (void)it;
         (void)inserted;
         assert(inserted && "component already exists for this unit");
     }
 
     void del(UnitId id) override {
-        data.erase(id);
+        data_.erase(id);
     }
 
     bool has(UnitId id) override {
-        return data.find(id) != data.end();
+        return data_.find(id) != data_.end();
     }
 
     TData& get(UnitId id) override {
-        return data.at(id);
+        return data_.at(id);
     }
 
     void forEach(const std::function<void(UnitId, TData&)>& fn) override {
-        for (auto& [id, value] : data) {
+        for (auto& [id, value] : data_) {
             fn(id, value);
         }
     }
+
+private:
+    std::unordered_map<UnitId, TData> data_;
 };
 
 }  // namespace detail

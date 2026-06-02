@@ -1,6 +1,6 @@
 #include "HealthSystem.hpp"
 
-#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Vitals/Health.hpp>
 #include <algorithm>
@@ -9,15 +9,11 @@ namespace sw::core {
 
 namespace {
 
-struct CoreHealthSystem : IHealthSystem {
-    explicit CoreHealthSystem(Engine& engine) :
-            engine(engine) {}
-
-    Engine& engine;
-
-    IComponentStore<components::Health>& health() {
-        return engine.components.getComponent<components::Health>();
-    }
+class CoreHealthSystem : public IHealthSystem {
+public:
+    CoreHealthSystem(ComponentsLocator& components, SystemsLocator& systems) :
+            components_(components),
+            systems_(systems) {}
 
     bool has(UnitId id) override {
         return health().has(id);
@@ -31,9 +27,9 @@ struct CoreHealthSystem : IHealthSystem {
         auto& hp = health().get(target).hp.value;
         const bool was_alive = hp > 0;
         hp -= amount;
-        attacked.emit({source, target, Damage{amount}, components::HealthPoints{std::max(hp, 0)}});
+        attacked_.emit({source, target, Damage{amount}, components::HealthPoints{std::max(hp, 0)}});
         if (was_alive && hp <= 0) {
-            engine.systems.getSystem<IUnitSystem>().scheduleDeath(target);
+            systems_.getSystem<IUnitSystem>().scheduleDeath(target);
         }
     }
 
@@ -42,12 +38,20 @@ struct CoreHealthSystem : IHealthSystem {
     }
 
     ~CoreHealthSystem() override = default;
+
+private:
+    IComponentStore<components::Health>& health() {
+        return components_.getComponent<components::Health>();
+    }
+
+    ComponentsLocator& components_;
+    SystemsLocator& systems_;
 };
 
 }  // namespace
 
-IHealthSystemPtr makeCoreHealthSystem(Engine& engine) {
-    return std::make_unique<CoreHealthSystem>(engine);
+IHealthSystemPtr makeCoreHealthSystem(ComponentsLocator& components, SystemsLocator& systems) {
+    return std::make_unique<CoreHealthSystem>(components, systems);
 }
 
 }  // namespace sw::core

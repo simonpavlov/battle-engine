@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/Systems.hpp>
 #include <Core/Foundation/Unit.hpp>
 #include <Core/Modules/Combat/CombatReaction.hpp>
 #include <Core/Modules/Combat/CombatSystem.hpp>
@@ -11,41 +11,44 @@
 
 namespace sw::feature {
 
-// TODO: move to core
-struct AttackAction : core::IAction {
+class AttackAction : public core::IAction {
+public:
     using PropertyFn = std::function<core::AttackProperty(core::UnitId)>;
     using FireFn = std::function<bool(core::UnitId)>;
 
-    AttackAction(core::Engine& engine, core::AttackKind kind, PropertyFn get_attack_property, FireFn can_fire = {}) :
-            engine(engine),
-            kind(kind),
-            get_attack_property(std::move(get_attack_property)),
-            can_fire(std::move(can_fire)) {}
-
-    core::Engine& engine;
-    core::AttackKind kind;
-    PropertyFn get_attack_property;
-    FireFn can_fire;
+    AttackAction(
+        core::SystemsLocator& systems, core::AttackKind kind, PropertyFn get_attack_property, FireFn can_fire = {}
+    ) :
+            systems_(systems),
+            kind_(kind),
+            get_attack_property_(std::move(get_attack_property)),
+            can_fire_(std::move(can_fire)) {}
 
     bool tryExecute(core::UnitId self_id) override {
-        if (can_fire && !can_fire(self_id)) {
+        if (can_fire_ && !can_fire_(self_id)) {
             return false;
         }
 
-        const core::AttackProperty property = get_attack_property(self_id);
+        const core::AttackProperty property = get_attack_property_(self_id);
         if (property.damage.value <= 0) {
             return false;
         }
-        auto& combat_system = engine.systems.getSystem<core::ICombatSystem>();
-        std::vector<core::UnitId> targets = combat_system.selectTargets(self_id, kind, property.band);
+        auto& combat_system = systems_.getSystem<core::ICombatSystem>();
+        std::vector<core::UnitId> targets = combat_system.selectTargets(self_id, kind_, property.band);
         if (targets.empty()) {
             return false;
         }
 
-        const core::UnitId target = engine.systems.getSystem<core::IRngSystem>().pick(targets);
-        engine.systems.getSystem<core::IHealthSystem>().applyDamage(self_id, target, property.damage.value);
+        const core::UnitId target = systems_.getSystem<core::IRngSystem>().pick(targets);
+        systems_.getSystem<core::IHealthSystem>().applyDamage(self_id, target, property.damage.value);
         return true;
     }
+
+private:
+    core::SystemsLocator& systems_;
+    core::AttackKind kind_;
+    PropertyFn get_attack_property_;
+    FireFn can_fire_;
 };
 
 }  // namespace sw::feature

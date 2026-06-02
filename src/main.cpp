@@ -36,59 +36,59 @@ int main(int argc, char** argv) {
     }
 
     core::Engine engine;
+    auto& systems = engine.systems;
+    auto& components = engine.components;
     {
-        engine.systems.registerSystem<core::IPositionSystem>(core::makeCorePositionSystem(engine));
-        engine.systems.registerSystem<core::IHealthSystem>(core::makeCoreHealthSystem(engine));
-        engine.systems.registerSystem<core::ICombatSystem>(core::makeCoreCombatSystem(engine));
-        engine.systems.registerSystem<core::IRngSystem>(core::makeCoreRngSystem());
-        engine.systems.registerSystem<core::IUnitSystem>(core::makeCoreUnitSystem(engine));
+        systems.registerSystem<core::IPositionSystem>(core::makeCorePositionSystem(components, systems));
+        systems.registerSystem<core::IHealthSystem>(core::makeCoreHealthSystem(components, systems));
+        systems.registerSystem<core::ICombatSystem>(core::makeCoreCombatSystem(systems));
+        systems.registerSystem<core::IRngSystem>(core::makeCoreRngSystem());
+        systems.registerSystem<core::IUnitSystem>(core::makeCoreUnitSystem(components));
 
-        auto& combat_system = engine.systems.getSystem<core::ICombatSystem>();
+        auto& combat_system = systems.getSystem<core::ICombatSystem>();
         combat_system.registerAttackKind(core::kMeleeAttackKind);
         combat_system.registerAttackKind(core::kRangedAttackKind);
 
-        engine.components.registerComponent<core::components::Health>();
-        engine.components.registerComponent<core::components::Position>();
-        engine.components.registerComponent<core::components::Speed>();
-        engine.components.registerComponent<core::components::Destination>();
-        engine.components.registerComponent<core::components::Strength>();
-        engine.components.registerComponent<core::components::Agility>();
-        engine.components.registerComponent<core::components::Range>();
+        components.registerComponent<core::components::Health>();
+        components.registerComponent<core::components::Position>();
+        components.registerComponent<core::components::Speed>();
+        components.registerComponent<core::components::Destination>();
+        components.registerComponent<core::components::Strength>();
+        components.registerComponent<core::components::Agility>();
+        components.registerComponent<core::components::Range>();
 
-        auto& unit_system = engine.systems.getSystem<core::IUnitSystem>();
-        unit_system.registerUnitType(feature::makeSwordsmanType(engine));
-        unit_system.registerUnitType(feature::makeHunterType(engine));
-        unit_system.registerUnitType(feature::makeRavenType(engine));
+        auto& unit_system = systems.getSystem<core::IUnitSystem>();
+        unit_system.registerUnitType(feature::makeSwordsmanType(components, systems));
+        unit_system.registerUnitType(feature::makeHunterType(components, systems));
+        unit_system.registerUnitType(feature::makeRavenType(components, systems));
     }
 
     EventLog log;
     {
-        auto& ps = engine.systems.getSystem<core::IPositionSystem>();
-        auto& hs = engine.systems.getSystem<core::IHealthSystem>();
-        auto& us = engine.systems.getSystem<core::IUnitSystem>();
-        ps.onMapCreated().connect([&](const auto& e) { log.log(engine.tick, e); });
-        ps.onMoved().connect([&](const auto& e) { log.log(engine.tick, e); });
-        ps.onMarchStarted().connect([&](const auto& e) { log.log(engine.tick, e); });
-        ps.onMarchEnded().connect([&](const auto& e) { log.log(engine.tick, e); });
-        hs.onAttacked().connect([&](const auto& e) { log.log(engine.tick, e); });
-        us.onSpawned().connect([&](const auto& e) { log.log(engine.tick, e); });
-        us.onDied().connect([&](const auto& e) { log.log(engine.tick, e); });
+        auto& position_system = systems.getSystem<core::IPositionSystem>();
+        auto& health_system = systems.getSystem<core::IHealthSystem>();
+        auto& unit_system = systems.getSystem<core::IUnitSystem>();
+        position_system.onMapCreated().connect([&](const auto& e) { log.log(engine.tick, e); });
+        position_system.onMoved().connect([&](const auto& e) { log.log(engine.tick, e); });
+        position_system.onMarchStarted().connect([&](const auto& e) { log.log(engine.tick, e); });
+        position_system.onMarchEnded().connect([&](const auto& e) { log.log(engine.tick, e); });
+        health_system.onAttacked().connect([&](const auto& e) { log.log(engine.tick, e); });
+        unit_system.onSpawned().connect([&](const auto& e) { log.log(engine.tick, e); });
+        unit_system.onDied().connect([&](const auto& e) { log.log(engine.tick, e); });
     }
 
     {
         io::CommandParser parser;
-        auto& ps = engine.systems.getSystem<core::IPositionSystem>();
-        parser.add<core::commands::CreateMap>([&](core::commands::CreateMap c) { ps.setBounds(c.width, c.height); })
-            .add<feature::commands::SpawnSwordsman>([&](feature::commands::SpawnSwordsman c) {
-                feature::spawnSwordsman(engine, std::move(c));
+        auto& position_system = systems.getSystem<core::IPositionSystem>();
+        parser.add<core::commands::CreateMap>([&](auto c) { position_system.setBounds(c.width, c.height); })
+            .add<feature::commands::SpawnSwordsman>([&](auto c) {
+                feature::spawnSwordsman(components, systems, std::move(c));
             })
-            .add<feature::commands::SpawnHunter>([&](feature::commands::SpawnHunter c) {
-                feature::spawnHunter(engine, std::move(c));
+            .add<feature::commands::SpawnHunter>([&](auto c) {
+                feature::spawnHunter(components, systems, std::move(c));
             })
-            .add<feature::commands::SpawnRaven>([&](feature::commands::SpawnRaven c) {
-                feature::spawnRaven(engine, std::move(c));
-            })
-            .add<core::commands::March>([&](core::commands::March c) { ps.march(c.unitId, c.target); });
+            .add<feature::commands::SpawnRaven>([&](auto c) { feature::spawnRaven(components, systems, std::move(c)); })
+            .add<core::commands::March>([&](auto c) { position_system.march(c.unitId, c.target); });
         parser.parse(file);
     }
 

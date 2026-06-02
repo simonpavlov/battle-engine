@@ -7,15 +7,13 @@
 #include <string>
 
 namespace sw::io {
-class CommandParser {
-private:
-    std::unordered_map<std::string, std::function<void(std::istream&)>> _commands;
 
+class CommandParser {
 public:
     template <class TCommandData>
     CommandParser& add(std::function<void(TCommandData)> handler) {
         std::string commandName = TCommandData::name;
-        auto [it, inserted] = _commands.emplace(commandName, [handler = std::move(handler)](std::istream& stream) {
+        auto [it, inserted] = commands_.emplace(commandName, [handler = std::move(handler)](std::istream& stream) {
             TCommandData data;
             CommandParserVisitor visitor(stream);
             data.visit(visitor);
@@ -29,5 +27,9 @@ public:
     }
 
     void parse(std::istream& stream);
+
+private:
+    std::unordered_map<std::string, std::function<void(std::istream&)>> commands_;
 };
+
 }  // namespace sw::io

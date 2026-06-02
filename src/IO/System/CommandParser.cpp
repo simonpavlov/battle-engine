@@ -16,8 +16,8 @@ void CommandParser::parse(std::istream& stream) {
             continue;
         }
 
-        auto command = _commands.find(commandName);
-        if (command == _commands.end()) {
+        auto command = commands_.find(commandName);
+        if (command == commands_.end()) {
             throw std::runtime_error("Unknown command: " + commandName);
         }
 

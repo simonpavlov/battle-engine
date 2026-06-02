@@ -1,6 +1,6 @@
 #include "PositionSystem.hpp"
 
-#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/Components.hpp>
 #include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Spatial/CollisionReaction.hpp>
 #include <Core/Modules/Spatial/Destination.hpp>
@@ -20,22 +20,16 @@ uint32_t stepToward(uint32_t from, uint32_t to) {
     return from;
 }
 
-struct CorePositionSystem : IPositionSystem {
-    explicit CorePositionSystem(Engine& engine) :
-            engine(engine) {}
-
-    Engine& engine;
-    uint32_t width = 0;
-    uint32_t height = 0;
-
-    IComponentStore<components::Position>& positions() {
-        return engine.components.getComponent<components::Position>();
-    }
+class CorePositionSystem : public IPositionSystem {
+public:
+    CorePositionSystem(ComponentsLocator& components, SystemsLocator& systems) :
+            components_(components),
+            systems_(systems) {}
 
     void setBounds(uint32_t w, uint32_t h) override {
-        width = w;
-        height = h;
-        mapCreated.emit({w, h});
+        width_ = w;
+        height_ = h;
+        mapCreated_.emit({w, h});
     }
 
     components::Position getPosition(UnitId id) override {
@@ -48,7 +42,7 @@ struct CorePositionSystem : IPositionSystem {
             return false;
         }
 
-        if (target_position.x >= width || target_position.y >= height) {
+        if (target_position.x >= width_ || target_position.y >= height_) {
             return false;
         }
 
@@ -68,7 +62,7 @@ struct CorePositionSystem : IPositionSystem {
         }
 
         positions().get(unit_to_move_id) = target_position;
-        moved.emit({unit_to_move_id, target_position});
+        moved_.emit({unit_to_move_id, target_position});
         return true;
     }
 
@@ -92,14 +86,14 @@ struct CorePositionSystem : IPositionSystem {
         if (!positions().has(id)) {
             return;
         }
-        marchStarted.emit({id, positions().get(id), target});
-        engine.components.getComponent<components::Destination>().add(
+        marchStarted_.emit({id, positions().get(id), target});
+        components_.getComponent<components::Destination>().add(
             id, components::Destination{.target = target, .active = true}
         );
     }
 
     bool advanceMarch(UnitId id) override {
-        auto& destinations = engine.components.getComponent<components::Destination>();
+        auto& destinations = components_.getComponent<components::Destination>();
         if (!destinations.has(id)) {
             return false;
         }
@@ -110,7 +104,7 @@ struct CorePositionSystem : IPositionSystem {
 
         if (positions().get(id) == destination.target) {
             destination.active = false;
-            marchEnded.emit({id, positions().get(id)});
+            marchEnded_.emit({id, positions().get(id)});
             return false;
         }
 
@@ -130,20 +124,27 @@ struct CorePositionSystem : IPositionSystem {
             moved_any = true;
             if (positions().get(id) == destination.target) {
                 destination.active = false;
-                marchEnded.emit({id, destination.target});
+                marchEnded_.emit({id, destination.target});
                 break;
             }
         }
         return moved_any;
     }
 
+    ~CorePositionSystem() override = default;
+
+private:
+    IComponentStore<components::Position>& positions() {
+        return components_.getComponent<components::Position>();
+    }
+
     uint32_t speedOf(UnitId id) {
-        auto& speeds = engine.components.getComponent<components::Speed>();
+        auto& speeds = components_.getComponent<components::Speed>();
         return speeds.has(id) ? speeds.get(id).value : 1;
     }
 
     std::optional<std::reference_wrapper<ICollisionReaction>> collisionReactionOf(UnitId id) const {
-        return engine.systems.getSystem<IUnitSystem>().getUnitType(id).findReaction<ICollisionReaction>();
+        return systems_.getSystem<IUnitSystem>().getUnitType(id).findReaction<ICollisionReaction>();
     }
 
     bool moverIgnoresOccupants(UnitId mover_id) const {
@@ -156,13 +157,16 @@ struct CorePositionSystem : IPositionSystem {
         return !reaction || !reaction->get().blocksMovement();
     }
 
-    ~CorePositionSystem() override = default;
+    ComponentsLocator& components_;
+    SystemsLocator& systems_;
+    uint32_t width_ = 0;
+    uint32_t height_ = 0;
 };
 
 }  // namespace
 
-IPositionSystemPtr makeCorePositionSystem(Engine& engine) {
-    return std::make_unique<CorePositionSystem>(engine);
+IPositionSystemPtr makeCorePositionSystem(ComponentsLocator& components, SystemsLocator& systems) {
+    return std::make_unique<CorePositionSystem>(components, systems);
 }
 
 }  // namespace sw::core

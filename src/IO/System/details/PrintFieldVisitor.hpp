@@ -5,17 +5,17 @@
 
 namespace sw {
 class PrintFieldVisitor {
-private:
-    std::ostream& _stream;
-
 public:
     explicit PrintFieldVisitor(std::ostream& stream) :
-            _stream(stream) {}
+            stream_(stream) {}
 
     template <typename T>
     void visit(const char* name, const T& value) {
-        _stream << name << "=" << value << ' ';
+        stream_ << name << "=" << value << ' ';
     }
+
+private:
+    std::ostream& stream_;
 };
 
 }  // namespace sw

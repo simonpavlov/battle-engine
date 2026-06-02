@@ -6,6 +6,7 @@
 #include <iostream>
 
 namespace sw {
+
 class EventLog {
 public:
     template <class TEvent>
@@ -16,4 +17,5 @@ public:
         std::cout << std::endl;
     }
 };
+
 }  // namespace sw
