@@ -1,8 +1,8 @@
 #pragma once
 
-#include <Core/Modules/Combat/CombatReaction.hpp>
 #include <Core/Foundation/Systems.hpp>
 #include <Core/Foundation/Unit.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
 #include <memory>
 #include <vector>
 

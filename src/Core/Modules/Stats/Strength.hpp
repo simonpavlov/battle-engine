@@ -1,12 +1,10 @@
 #pragma once
 
+#include <Core/Foundation/StrongType.hpp>
 #include <cstdint>
 
-namespace sw::core {
+namespace sw::core::components {
 
-// TODO: why is not StrongType ?
-struct Strength {
-    uint32_t value;
-};
+using Strength = StrongType<std::int32_t, struct StrengthTag>;
 
-}  // namespace sw::core
+}  // namespace sw::core::components

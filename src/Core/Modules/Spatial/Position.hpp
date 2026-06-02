@@ -1,9 +1,10 @@
 #pragma once
 
+#include <Core/Foundation/StrongType.hpp>
 #include <algorithm>
 #include <cstdint>
 
-namespace sw::core {
+namespace sw::core::components {
 
 struct Position {
     uint32_t x;
@@ -12,12 +13,16 @@ struct Position {
     friend bool operator==(const Position&, const Position&) = default;
 };
 
-// TODO: using Distance = StrongType
+}  // namespace sw::core::components
 
-inline uint32_t chebyshev(Position a, Position b) {
+namespace sw::core {
+
+using Distance = StrongType<uint32_t, struct DistanceTag>;
+
+inline Distance chebyshev(components::Position a, components::Position b) {
     const uint32_t dx = a.x > b.x ? a.x - b.x : b.x - a.x;
     const uint32_t dy = a.y > b.y ? a.y - b.y : b.y - a.y;
-    return std::max(dx, dy);
+    return Distance{std::max(dx, dy)};
 }
 
 }  // namespace sw::core

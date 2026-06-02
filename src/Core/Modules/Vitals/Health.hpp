@@ -1,11 +1,15 @@
 #pragma once
 
-namespace sw::core {
+#include <Core/Foundation/StrongType.hpp>
+#include <cstdint>
 
-// TODO: add max_hp to support hiller in future
+namespace sw::core::components {
+
+using HealthPoints = StrongType<std::int32_t, struct HealthPointsTag>;
+
 struct Health {
-    // TODO: int -> uint32_t
-    int hp;
+    HealthPoints hp;
+    HealthPoints max_hp;
 };
 
-}  // namespace sw::core
+}  // namespace sw::core::components

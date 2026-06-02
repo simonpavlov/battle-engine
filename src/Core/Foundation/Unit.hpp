@@ -12,8 +12,7 @@
 
 namespace sw::core {
 
-// TODO: rename Unit to Entity
-using UnitId = StrongType<std::uint32_t>;
+using UnitId = StrongType<std::uint32_t, struct UnitIdTag>;
 
 struct IAction {
     virtual bool tryExecute(UnitId self_id) = 0;
@@ -28,12 +27,10 @@ struct IReaction {
 
 using IReactionPtr = std::unique_ptr<IReaction>;
 
-using UnitTypeId = StrongType<std::uint32_t>;
+using UnitTypeId = StrongType<std::string, struct UnitTypeIdTag>;
 
-// TODO: rename Unit to Entity
 struct UnitType {
-    UnitTypeId id = {.value = 0};
-    std::string name;
+    UnitTypeId id;
     std::vector<IActionPtr> actions;
     std::unordered_map<std::type_index, IReactionPtr> reactions;
 

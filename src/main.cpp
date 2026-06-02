@@ -1,30 +1,23 @@
-#include <Core/Modules/Stats/Agility.hpp>
-#include <Core/Modules/Combat/CombatSystem.hpp>
-#include <Core/Modules/Spatial/Destination.hpp>
 #include <Core/Foundation/Engine.hpp>
-#include <Core/Modules/Vitals/Health.hpp>
-#include <Core/Modules/Vitals/HealthSystem.hpp>
-#include <Core/Modules/Spatial/Position.hpp>
-#include <Core/Modules/Spatial/PositionSystem.hpp>
+#include <Core/Foundation/Unit.hpp>
+#include <Core/Foundation/UnitEvents.hpp>
+#include <Core/Foundation/UnitSystem.hpp>
+#include <Core/Modules/Combat/CombatSystem.hpp>
 #include <Core/Modules/Rng/RngSystem.hpp>
+#include <Core/Modules/Spatial/Destination.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Modules/Spatial/PositionCommands.hpp>
+#include <Core/Modules/Spatial/PositionEvents.hpp>
+#include <Core/Modules/Spatial/PositionSystem.hpp>
+#include <Core/Modules/Stats/Agility.hpp>
 #include <Core/Modules/Stats/Speed.hpp>
 #include <Core/Modules/Stats/Strength.hpp>
-#include <Core/Foundation/Unit.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
+#include <Core/Modules/Vitals/HealthEvents.hpp>
+#include <Core/Modules/Vitals/HealthSystem.hpp>
 #include <Features/Units/Hunter.hpp>
 #include <Features/Units/Raven.hpp>
 #include <Features/Units/Swordsman.hpp>
-#include <IO/Commands/CreateMap.hpp>
-#include <IO/Commands/March.hpp>
-#include <IO/Commands/SpawnHunter.hpp>
-#include <IO/Commands/SpawnRaven.hpp>
-#include <IO/Commands/SpawnSwordsman.hpp>
-#include <IO/Events/MapCreated.hpp>
-#include <IO/Events/MarchEnded.hpp>
-#include <IO/Events/MarchStarted.hpp>
-#include <IO/Events/UnitAttacked.hpp>
-#include <IO/Events/UnitDied.hpp>
-#include <IO/Events/UnitMoved.hpp>
-#include <IO/Events/UnitSpawned.hpp>
 #include <IO/System/CommandParser.hpp>
 #include <IO/System/EventLog.hpp>
 #include <fstream>
@@ -48,78 +41,54 @@ int main(int argc, char** argv) {
         engine.systems.registerSystem<core::IHealthSystem>(core::makeCoreHealthSystem(engine));
         engine.systems.registerSystem<core::ICombatSystem>(core::makeCoreCombatSystem(engine));
         engine.systems.registerSystem<core::IRngSystem>(core::makeCoreRngSystem());
+        engine.systems.registerSystem<core::IUnitSystem>(core::makeCoreUnitSystem(engine));
 
         auto& combat_system = engine.systems.getSystem<core::ICombatSystem>();
         combat_system.registerAttackKind(core::kMeleeAttackKind);
         combat_system.registerAttackKind(core::kRangedAttackKind);
 
-        engine.components.registerComponent<core::Health>();
-        engine.components.registerComponent<core::Position>();
-        engine.components.registerComponent<core::Speed>();
-        engine.components.registerComponent<core::Destination>();
-        engine.components.registerComponent<core::Strength>();
-        engine.components.registerComponent<core::Agility>();
-        engine.components.registerComponent<core::Range>();
+        engine.components.registerComponent<core::components::Health>();
+        engine.components.registerComponent<core::components::Position>();
+        engine.components.registerComponent<core::components::Speed>();
+        engine.components.registerComponent<core::components::Destination>();
+        engine.components.registerComponent<core::components::Strength>();
+        engine.components.registerComponent<core::components::Agility>();
+        engine.components.registerComponent<core::components::Range>();
 
-        engine.registerUnitType(feature::makeSwordsmanType(engine));
-        engine.registerUnitType(feature::makeHunterType(engine));
-        engine.registerUnitType(feature::makeRavenType(engine));
+        auto& unit_system = engine.systems.getSystem<core::IUnitSystem>();
+        unit_system.registerUnitType(feature::makeSwordsmanType(engine));
+        unit_system.registerUnitType(feature::makeHunterType(engine));
+        unit_system.registerUnitType(feature::makeRavenType(engine));
     }
 
     EventLog log;
     {
         auto& ps = engine.systems.getSystem<core::IPositionSystem>();
         auto& hs = engine.systems.getSystem<core::IHealthSystem>();
-        ps.onMapCreated().connect([&](uint32_t w, uint32_t h) { log.log(engine.tick, io::MapCreated{w, h}); });
-        ps.onMoved().connect([&](core::UnitId id, core::Position p) {
-            log.log(engine.tick, io::UnitMoved{id.value, p.x, p.y});
-        });
-        ps.onMarchStarted().connect([&](core::UnitId id, core::Position from, core::Position to) {
-            log.log(engine.tick, io::MarchStarted{id.value, from.x, from.y, to.x, to.y});
-        });
-        ps.onMarchEnded().connect([&](core::UnitId id, core::Position p) {
-            log.log(engine.tick, io::MarchEnded{id.value, p.x, p.y});
-        });
-        hs.onAttacked().connect([&](core::UnitId src, core::UnitId tgt, int dmg, int tgt_hp) {
-            log.log(
-                engine.tick,
-                io::UnitAttacked{src.value, tgt.value, static_cast<uint32_t>(dmg), static_cast<uint32_t>(tgt_hp)}
-            );
-        });
-        engine.onSpawned().connect([&](core::UnitId id, std::string_view type, core::Position p) {
-            log.log(engine.tick, io::UnitSpawned{id.value, std::string(type), p.x, p.y});
-        });
-        engine.onDied().connect([&](core::UnitId id) { log.log(engine.tick, io::UnitDied{id.value}); });
+        auto& us = engine.systems.getSystem<core::IUnitSystem>();
+        ps.onMapCreated().connect([&](const auto& e) { log.log(engine.tick, e); });
+        ps.onMoved().connect([&](const auto& e) { log.log(engine.tick, e); });
+        ps.onMarchStarted().connect([&](const auto& e) { log.log(engine.tick, e); });
+        ps.onMarchEnded().connect([&](const auto& e) { log.log(engine.tick, e); });
+        hs.onAttacked().connect([&](const auto& e) { log.log(engine.tick, e); });
+        us.onSpawned().connect([&](const auto& e) { log.log(engine.tick, e); });
+        us.onDied().connect([&](const auto& e) { log.log(engine.tick, e); });
     }
 
     {
         io::CommandParser parser;
         auto& ps = engine.systems.getSystem<core::IPositionSystem>();
-        parser.add<io::CreateMap>([&](io::CreateMap c) { ps.setBounds(c.width, c.height); })
-            .add<io::SpawnSwordsman>([&](io::SpawnSwordsman c) {
-                feature::spawnSwordsman(
-                    engine,
-                    core::UnitId{c.unitId},
-                    core::Position{c.x, c.y},
-                    // TODO: change Core HP to uint32_t, try to remove static_cast everywhere by changing types,
-                    // uint32_t better
-                    static_cast<int>(c.hp),
-                    c.strength
-                );
+        parser.add<core::commands::CreateMap>([&](core::commands::CreateMap c) { ps.setBounds(c.width, c.height); })
+            .add<feature::commands::SpawnSwordsman>([&](feature::commands::SpawnSwordsman c) {
+                feature::spawnSwordsman(engine, std::move(c));
             })
-            .add<io::SpawnHunter>([&](io::SpawnHunter c) {
-                feature::spawnHunter(
-                    engine, core::UnitId{c.unitId}, core::Position{.x = c.x, .y = c.y}, static_cast<int>(c.hp), c.strength, c.agility, c.range
-                );
+            .add<feature::commands::SpawnHunter>([&](feature::commands::SpawnHunter c) {
+                feature::spawnHunter(engine, std::move(c));
             })
-            .add<io::SpawnRaven>([&](io::SpawnRaven c) {
-                feature::spawnRaven(
-                    engine, core::UnitId{c.unitId}, core::Position{c.x, c.y}, static_cast<int>(c.hp), c.agility
-                );
+            .add<feature::commands::SpawnRaven>([&](feature::commands::SpawnRaven c) {
+                feature::spawnRaven(engine, std::move(c));
             })
-            .add<io::March>([&](io::March c) {
-                ps.march(core::UnitId{c.unitId}, core::Position{c.targetX, c.targetY});
-            });
+            .add<core::commands::March>([&](core::commands::March c) { ps.march(c.unitId, c.target); });
         parser.parse(file);
     }
 

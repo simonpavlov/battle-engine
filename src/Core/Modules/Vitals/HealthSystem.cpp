@@ -1,6 +1,7 @@
 #include "HealthSystem.hpp"
 
 #include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Vitals/Health.hpp>
 #include <algorithm>
 
@@ -14,30 +15,30 @@ struct CoreHealthSystem : IHealthSystem {
 
     Engine& engine;
 
-    IComponentStore<Health>& health() {
-        return engine.components.getComponent<Health>();
+    IComponentStore<components::Health>& health() {
+        return engine.components.getComponent<components::Health>();
     }
 
     bool has(UnitId id) override {
         return health().has(id);
     }
 
-    int getHp(UnitId id) override {
-        return health().get(id).hp;
+    std::int32_t getHp(UnitId id) override {
+        return health().get(id).hp.value;
     }
 
-    void applyDamage(UnitId source, UnitId target, int amount) override {
-        auto& hp = health().get(target).hp;
+    void applyDamage(UnitId source, UnitId target, std::int32_t amount) override {
+        auto& hp = health().get(target).hp.value;
         const bool was_alive = hp > 0;
         hp -= amount;
-        attacked.emit(source, target, amount, std::max(hp, 0));
+        attacked.emit({source, target, Damage{amount}, components::HealthPoints{std::max(hp, 0)}});
         if (was_alive && hp <= 0) {
-            engine.scheduleDeath(target);
+            engine.systems.getSystem<IUnitSystem>().scheduleDeath(target);
         }
     }
 
     bool isAlive(UnitId id) override {
-        return health().has(id) && health().get(id).hp > 0;
+        return health().has(id) && health().get(id).hp.value > 0;
     }
 
     ~CoreHealthSystem() override = default;

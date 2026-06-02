@@ -8,6 +8,7 @@ Checks: >
   readability-*,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
   -readability-identifier-length,
   -bugprone-easily-swappable-parameters,
   -cppcoreguidelines-non-private-member-variables-in-classes,

@@ -5,7 +5,7 @@
 
 namespace sw::core {
 
-template <class T>
+template <class T, class Tag>
 struct StrongType {
     T value;
 
@@ -14,9 +14,9 @@ struct StrongType {
 
 }  // namespace sw::core
 
-template <class T>
-struct std::hash<sw::core::StrongType<T>> {
-    std::size_t operator()(const sw::core::StrongType<T>& key) const noexcept {
+template <class T, class Tag>
+struct std::hash<sw::core::StrongType<T, Tag>> {
+    std::size_t operator()(const sw::core::StrongType<T, Tag>& key) const noexcept {
         return std::hash<T>{}(key.value);
     }
 };

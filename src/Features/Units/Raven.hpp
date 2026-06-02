@@ -1,21 +1,24 @@
 #pragma once
 
-#include <Core/Modules/Stats/Agility.hpp>
-#include <Core/Modules/Spatial/CollisionReaction.hpp>
-#include <Core/Modules/Combat/CombatReaction.hpp>
 #include <Core/Foundation/Engine.hpp>
-#include <Core/Modules/Vitals/Health.hpp>
-#include <Core/Modules/Spatial/Position.hpp>
-#include <Core/Modules/Stats/Speed.hpp>
 #include <Core/Foundation/Unit.hpp>
+#include <Core/Foundation/UnitSystem.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
+#include <Core/Modules/Spatial/CollisionReaction.hpp>
+#include <Core/Modules/Spatial/Position.hpp>
+#include <Core/Modules/Stats/Agility.hpp>
+#include <Core/Modules/Stats/Speed.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
 #include <Features/Actions/AttackAction.hpp>
 #include <Features/Actions/MoveAction.hpp>
-#include <cstdint>
 #include <memory>
 
 namespace sw::feature {
 
-static const auto kRavenTypeId = core::UnitTypeId{.value = 13};
+inline const core::UnitTypeId& ravenTypeId() {
+    static const core::UnitTypeId id{"Raven"};
+    return id;
+}
 
 struct FlyingReaction : core::ICollisionReaction {
     bool blocksMovement() override {
@@ -44,19 +47,20 @@ struct RavenTargetReaction : core::IOnTargetReaction {
 
 inline core::UnitType makeRavenType(core::Engine& engine) {
     auto unit_type = core::UnitType{
-        .id = kRavenTypeId,
-        .name = "Raven",
+        .id = ravenTypeId(),
         .actions = {},
         .reactions = {},
     };
     // Talon Strike: adjacent attack for Agility.
-    unit_type.actions.push_back(std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
-        const auto agility = engine.components.getComponent<core::Agility>().get(self).value;
-        return core::AttackProperty{
-            .band = {.min = core::Distance{1}, .max = core::Distance{1}},
-            .damage = core::Damage{static_cast<int>(agility)},
-        };
-    }));
+    unit_type.actions.push_back(
+        std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
+            const auto agility = engine.components.getComponent<core::components::Agility>().get(self);
+            return core::AttackProperty{
+                .band = {.min = core::Distance{1}, .max = core::Distance{1}},
+                .damage = core::Damage{agility.value},
+            };
+        })
+    );
     unit_type.actions.push_back(std::make_unique<MoveAction>(engine));
     // Flight: moves over occupied cells without being blocked.
     unit_type.setReaction<core::ICollisionReaction>(std::make_unique<FlyingReaction>());
@@ -65,12 +69,36 @@ inline core::UnitType makeRavenType(core::Engine& engine) {
     return unit_type;
 }
 
-inline void spawnRaven(core::Engine& engine, core::UnitId id, core::Position pos, int hp, uint32_t agility) {
-    engine.components.getComponent<core::Position>().add(id, std::move(pos));
-    engine.components.getComponent<core::Health>().add(id, core::Health{hp});
-    engine.components.getComponent<core::Speed>().add(id, core::Speed{2});
-    engine.components.getComponent<core::Agility>().add(id, core::Agility{agility});
-    engine.addUnit(kRavenTypeId, id);
+namespace commands {
+
+struct SpawnRaven {
+    static constexpr const char* name = "SPAWN_RAVEN";
+
+    core::UnitId unitId{};
+    core::components::Position pos{};
+    core::components::HealthPoints hp{};
+    core::components::Agility agility{};
+
+    template <typename Visitor>
+    void visit(Visitor& visitor) {
+        visitor.visit("unitId", unitId);
+        visitor.visit("x", pos.x);
+        visitor.visit("y", pos.y);
+        visitor.visit("hp", hp);
+        visitor.visit("agility", agility);
+    }
+};
+
+}  // namespace commands
+
+inline void spawnRaven(core::Engine& engine, commands::SpawnRaven cmd) {
+    engine.components.getComponent<core::components::Position>().add(cmd.unitId, std::move(cmd.pos));
+    engine.components.getComponent<core::components::Health>().add(
+        cmd.unitId, core::components::Health{cmd.hp, cmd.hp}
+    );
+    engine.components.getComponent<core::components::Speed>().add(cmd.unitId, core::components::Speed{2});
+    engine.components.getComponent<core::components::Agility>().add(cmd.unitId, std::move(cmd.agility));
+    engine.systems.getSystem<core::IUnitSystem>().addUnit(ravenTypeId(), cmd.unitId);
 }
 
 }  // namespace sw::feature

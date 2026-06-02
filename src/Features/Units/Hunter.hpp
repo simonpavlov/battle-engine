@@ -1,28 +1,30 @@
 #pragma once
 
-#include <Core/Modules/Stats/Agility.hpp>
-#include <Core/Modules/Spatial/CollisionReaction.hpp>
-#include <Core/Modules/Combat/CombatReaction.hpp>
 #include <Core/Foundation/Engine.hpp>
-#include <Core/Modules/Vitals/Health.hpp>
+#include <Core/Foundation/Unit.hpp>
+#include <Core/Foundation/UnitSystem.hpp>
+#include <Core/Modules/Combat/CombatReaction.hpp>
+#include <Core/Modules/Combat/Range.hpp>
+#include <Core/Modules/Spatial/CollisionReaction.hpp>
 #include <Core/Modules/Spatial/Position.hpp>
 #include <Core/Modules/Spatial/PositionSystem.hpp>
-#include <Core/Modules/Combat/Range.hpp>
+#include <Core/Modules/Stats/Agility.hpp>
 #include <Core/Modules/Stats/Strength.hpp>
-#include <Core/Foundation/Unit.hpp>
+#include <Core/Modules/Vitals/Health.hpp>
 #include <Features/Actions/AttackAction.hpp>
 #include <Features/Actions/MoveAction.hpp>
-#include <cstdint>
 #include <memory>
 
 namespace sw::feature {
 
-static const auto kHunterTypeId = core::UnitTypeId{333};
+inline const core::UnitTypeId& hunterTypeId() {
+    static const core::UnitTypeId id{"Hunter"};
+    return id;
+}
 
 inline core::UnitType makeHunterType(core::Engine& engine) {
     auto unit_type = core::UnitType{
-        .id = kHunterTypeId,
-        .name = "Hunter",
+        .id = hunterTypeId(),
         .actions = {},
         .reactions = {},
     };
@@ -33,16 +35,18 @@ inline core::UnitType makeHunterType(core::Engine& engine) {
             engine,
             core::kRangedAttackKind,
             [&engine](core::UnitId self) {
-                const auto range = engine.components.getComponent<core::Range>().get(self).range;
-                const auto agility = engine.components.getComponent<core::Agility>().get(self).value;
+                const auto range = engine.components.getComponent<core::components::Range>().get(self).value;
+                const auto agility = engine.components.getComponent<core::components::Agility>().get(self).value;
                 return core::AttackProperty{
                     .band = {.min = core::Distance{2}, .max = core::Distance{range}},
-                    .damage = core::Damage{static_cast<int>(agility)},
+                    .damage = core::Damage{agility},
                 };
             },
             [&engine](core::UnitId self) {
                 auto& position_system = engine.systems.getSystem<core::IPositionSystem>();
-                return position_system.unitsInRange(position_system.getPosition(self), 1, 1, self).empty();
+                return position_system
+                    .unitsInRange(position_system.getPosition(self), core::Distance{1}, core::Distance{1}, self)
+                    .empty();
             }
         )
     );
@@ -50,10 +54,10 @@ inline core::UnitType makeHunterType(core::Engine& engine) {
     // Shadow Strike: melee fallback for Strength.
     unit_type.actions.push_back(
         std::make_unique<AttackAction>(engine, core::kMeleeAttackKind, [&engine](core::UnitId self) {
-            const auto strength = engine.components.getComponent<core::Strength>().get(self).value;
+            const auto strength = engine.components.getComponent<core::components::Strength>().get(self).value;
             return core::AttackProperty{
                 .band = {.min = core::Distance{1}, .max = core::Distance{1}},
-                .damage = core::Damage{static_cast<int>(strength)},
+                .damage = core::Damage{strength},
             };
         })
     );
@@ -63,21 +67,41 @@ inline core::UnitType makeHunterType(core::Engine& engine) {
     return unit_type;
 }
 
-inline void spawnHunter(
-    core::Engine& engine,
-    core::UnitId id,
-    core::Position pos,
-    int hp,
-    uint32_t strength,
-    uint32_t agility,
-    uint32_t range
-) {
-    engine.components.getComponent<core::Position>().add(id, std::move(pos));
-    engine.components.getComponent<core::Health>().add(id, core::Health{hp});
-    engine.components.getComponent<core::Strength>().add(id, core::Strength{strength});
-    engine.components.getComponent<core::Agility>().add(id, core::Agility{agility});
-    engine.components.getComponent<core::Range>().add(id, core::Range{range});
-    engine.addUnit(kHunterTypeId, id);
+namespace commands {
+
+struct SpawnHunter {
+    static constexpr const char* name = "SPAWN_HUNTER";
+
+    core::UnitId unitId{};
+    core::components::Position pos{};
+    core::components::HealthPoints hp{};
+    core::components::Agility agility{};
+    core::components::Strength strength{};
+    core::components::Range range{};
+
+    template <typename Visitor>
+    void visit(Visitor& visitor) {
+        visitor.visit("unitId", unitId);
+        visitor.visit("x", pos.x);
+        visitor.visit("y", pos.y);
+        visitor.visit("hp", hp);
+        visitor.visit("agility", agility);
+        visitor.visit("strength", strength);
+        visitor.visit("range", range);
+    }
+};
+
+}  // namespace commands
+
+inline void spawnHunter(core::Engine& engine, commands::SpawnHunter cmd) {
+    engine.components.getComponent<core::components::Position>().add(cmd.unitId, std::move(cmd.pos));
+    engine.components.getComponent<core::components::Health>().add(
+        cmd.unitId, core::components::Health{cmd.hp, cmd.hp}
+    );
+    engine.components.getComponent<core::components::Strength>().add(cmd.unitId, std::move(cmd.strength));
+    engine.components.getComponent<core::components::Agility>().add(cmd.unitId, std::move(cmd.agility));
+    engine.components.getComponent<core::components::Range>().add(cmd.unitId, std::move(cmd.range));
+    engine.systems.getSystem<core::IUnitSystem>().addUnit(hunterTypeId(), cmd.unitId);
 }
 
 }  // namespace sw::feature

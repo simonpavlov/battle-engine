@@ -2,11 +2,11 @@
 
 #include <Core/Modules/Spatial/Position.hpp>
 
-namespace sw::core {
+namespace sw::core::components {
 
 struct Destination {
     Position target;
     bool active;
 };
 
-}  // namespace sw::core
+}  // namespace sw::core::components

@@ -14,7 +14,7 @@ private:
 public:
     template <class TCommandData>
     CommandParser& add(std::function<void(TCommandData)> handler) {
-        std::string commandName = TCommandData::Name;
+        std::string commandName = TCommandData::name;
         auto [it, inserted] = _commands.emplace(commandName, [handler = std::move(handler)](std::istream& stream) {
             TCommandData data;
             CommandParserVisitor visitor(stream);

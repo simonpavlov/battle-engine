@@ -1,11 +1,10 @@
 #pragma once
 
+#include <Core/Foundation/StrongType.hpp>
 #include <cstdint>
 
-namespace sw::core {
+namespace sw::core::components {
 
-struct Speed {
-    uint32_t cells_per_turn;
-};
+using Speed = StrongType<uint32_t, struct SpeedTag>;
 
-}  // namespace sw::core
+}  // namespace sw::core::components

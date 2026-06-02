@@ -1,11 +1,10 @@
 #pragma once
 
+#include <Core/Foundation/StrongType.hpp>
 #include <cstdint>
 
-namespace sw::core {
+namespace sw::core::components {
 
-struct Agility {
-    uint32_t value;
-};
+using Agility = StrongType<std::int32_t, struct AgilityTag>;
 
-}  // namespace sw::core
+}  // namespace sw::core::components

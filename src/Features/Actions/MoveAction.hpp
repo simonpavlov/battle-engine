@@ -1,8 +1,8 @@
 #pragma once
 
 #include <Core/Foundation/Engine.hpp>
-#include <Core/Modules/Spatial/PositionSystem.hpp>
 #include <Core/Foundation/Unit.hpp>
+#include <Core/Modules/Spatial/PositionSystem.hpp>
 
 namespace sw::feature {
 

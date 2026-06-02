@@ -1,8 +1,9 @@
 #include "PositionSystem.hpp"
 
+#include <Core/Foundation/Engine.hpp>
+#include <Core/Foundation/UnitSystem.hpp>
 #include <Core/Modules/Spatial/CollisionReaction.hpp>
 #include <Core/Modules/Spatial/Destination.hpp>
-#include <Core/Foundation/Engine.hpp>
 #include <Core/Modules/Stats/Speed.hpp>
 
 namespace sw::core {
@@ -27,22 +28,22 @@ struct CorePositionSystem : IPositionSystem {
     uint32_t width = 0;
     uint32_t height = 0;
 
-    IComponentStore<Position>& positions() {
-        return engine.components.getComponent<Position>();
+    IComponentStore<components::Position>& positions() {
+        return engine.components.getComponent<components::Position>();
     }
 
     void setBounds(uint32_t w, uint32_t h) override {
         width = w;
         height = h;
-        mapCreated.emit(w, h);
+        mapCreated.emit({w, h});
     }
 
-    Position getPosition(UnitId id) override {
+    components::Position getPosition(UnitId id) override {
         return positions().get(id);
     }
 
-    bool move(UnitId unit_to_move_id, Position target_position) override {
-        const Position current = positions().get(unit_to_move_id);
+    bool move(UnitId unit_to_move_id, components::Position target_position) override {
+        const components::Position current = positions().get(unit_to_move_id);
         if (target_position == current) {
             return false;
         }
@@ -53,7 +54,7 @@ struct CorePositionSystem : IPositionSystem {
 
         if (!moverIgnoresOccupants(unit_to_move_id)) {
             bool blocked = false;
-            positions().forEach([&](UnitId other_id, Position& other_position) {
+            positions().forEach([&](UnitId other_id, components::Position& other_position) {
                 if (other_id == unit_to_move_id || other_position != target_position) {
                     return;
                 }
@@ -67,55 +68,59 @@ struct CorePositionSystem : IPositionSystem {
         }
 
         positions().get(unit_to_move_id) = target_position;
-        moved.emit(unit_to_move_id, target_position);
+        moved.emit({unit_to_move_id, target_position});
         return true;
     }
 
-    std::vector<UnitId> unitsInRange(Position center, uint32_t min_range, uint32_t max_range, UnitId exclude) override {
+    std::vector<UnitId> unitsInRange(
+        components::Position center, Distance min_range, Distance max_range, UnitId exclude
+    ) override {
         std::vector<UnitId> result;
-        positions().forEach([&](UnitId id, Position& position) {
+        positions().forEach([&](UnitId id, components::Position& position) {
             if (id == exclude) {
                 return;
             }
-            const uint32_t distance = chebyshev(center, position);
-            if (distance >= min_range && distance <= max_range) {
+            const Distance distance = chebyshev(center, position);
+            if (distance.value >= min_range.value && distance.value <= max_range.value) {
                 result.push_back(id);
             }
         });
         return result;
     }
 
-    void march(UnitId id, Position target) override {
+    void march(UnitId id, components::Position target) override {
         if (!positions().has(id)) {
             return;
         }
-        marchStarted.emit(id, positions().get(id), target);
-        engine.components.getComponent<Destination>().add(id, Destination{.target = target, .active = true});
+        marchStarted.emit({id, positions().get(id), target});
+        engine.components.getComponent<components::Destination>().add(
+            id, components::Destination{.target = target, .active = true}
+        );
     }
 
     bool advanceMarch(UnitId id) override {
-        auto& destinations = engine.components.getComponent<Destination>();
+        auto& destinations = engine.components.getComponent<components::Destination>();
         if (!destinations.has(id)) {
             return false;
         }
-        Destination& destination = destinations.get(id);
+        components::Destination& destination = destinations.get(id);
         if (!destination.active) {
             return false;
         }
 
         if (positions().get(id) == destination.target) {
             destination.active = false;
-            marchEnded.emit(id, positions().get(id));
+            marchEnded.emit({id, positions().get(id)});
             return false;
         }
 
         bool moved_any = false;
         for (uint32_t step = 0; step < speedOf(id); ++step) {
-            const Position current = positions().get(id);
+            const components::Position current = positions().get(id);
             if (current == destination.target) {
                 break;
             }
-            const Position next{
+            const components::Position next{
                 .x = stepToward(current.x, destination.target.x),
                 .y = stepToward(current.y, destination.target.y),
             };
@@ -125,7 +130,7 @@ struct CorePositionSystem : IPositionSystem {
             moved_any = true;
             if (positions().get(id) == destination.target) {
                 destination.active = false;
-                marchEnded.emit(id, destination.target);
+                marchEnded.emit({id, destination.target});
                 break;
             }
         }
@@ -133,25 +138,20 @@ struct CorePositionSystem : IPositionSystem {
     }
 
     uint32_t speedOf(UnitId id) {
-        auto& speeds = engine.components.getComponent<Speed>();
-        return speeds.has(id) ? speeds.get(id).cells_per_turn : 1;
+        auto& speeds = engine.components.getComponent<components::Speed>();
+        return speeds.has(id) ? speeds.get(id).value : 1;
     }
 
-    // TODO: refactor finding the type to a separate units-owner type, see: Engine.hpp TODOs
-    std::optional<std::reference_wrapper<ICollisionReaction>> collisionReactionOf(UnitId id) {
-        const auto type_it = engine.unit_to_type.find(id);
-        if (type_it == engine.unit_to_type.end()) {
-            return std::nullopt;
-        }
-        return type_it->second.get().findReaction<ICollisionReaction>();
+    std::optional<std::reference_wrapper<ICollisionReaction>> collisionReactionOf(UnitId id) const {
+        return engine.systems.getSystem<IUnitSystem>().getUnitType(id).findReaction<ICollisionReaction>();
     }
 
-    bool moverIgnoresOccupants(UnitId mover_id) {
+    bool moverIgnoresOccupants(UnitId mover_id) const {
         auto reaction = collisionReactionOf(mover_id);
         return reaction && reaction->get().ignoresOccupants();
     }
 
-    bool isMoveAllowed(UnitId occupant_id) {
+    bool isMoveAllowed(UnitId occupant_id) const {
         auto reaction = collisionReactionOf(occupant_id);
         return !reaction || !reaction->get().blocksMovement();
     }
