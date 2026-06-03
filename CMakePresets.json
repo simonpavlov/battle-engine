@@ -33,6 +33,14 @@
         "CMAKE_BUILD_TYPE": "Release",
         "ENABLE_SANITIZERS": "OFF"
       }
+    },
+    {
+      "name": "vis",
+      "displayName": "Visualizer (raylib + ImGui)",
+      "inherits": "release",
+      "cacheVariables": {
+        "BUILD_VISUALIZER": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -43,6 +51,10 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "vis",
+      "configurePreset": "vis"
     }
   ],
   "workflowPresets": [
@@ -69,6 +81,19 @@
         {
           "type": "build",
           "name": "release"
+        }
+      ]
+    },
+    {
+      "name": "vis",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "vis"
+        },
+        {
+          "type": "build",
+          "name": "vis"
         }
       ]
     }
